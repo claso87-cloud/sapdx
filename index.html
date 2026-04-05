@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP BASIS DX — Diagnostic Experience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #080d16;
+  --bg2:   #0e1623;
+  --bg3:   #141e2e;
+  --bg4:   #1c2a3f;
+  --bg5:   #233247;
+  --border:  #ffffff0a;
+  --border2: #ffffff14;
+  --border3: #ffffff22;
+  --text:  #dde6f0;
+  --text2: #7a92ab;
+  --text3: #3e5265;
+  --blue:  #3b8ef3;
+  --blue2: #1a6fd4;
+  --bluedim: #1a3d6622;
+  --green: #0fba7e;
+  --greendim: #05411e22;
+  --red:   #f04444;
+  --reddim: #500e0e22;
+  --amber: #f5a623;
+  --amberdim: #4a2c0022;
+  --purple: #9b7ef8;
+  --purpledim: #2d1b6622;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: 150ms ease;
+}
+html { font-size: 14px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+button { font-family: var(--sans); cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: var(--sans); }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 4px; }
+
+/* ===== LOGIN SCREEN ===== */
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+#login-screen::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, #1a3d6618 0%, transparent 70%);
+  top: -200px; right: -200px;
+  pointer-events: none;
+}
+#login-screen::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #05411e0f 0%, transparent 70%);
+  bottom: -100px; left: -100px;
+  pointer-events: none;
+}
+.login-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+}
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.login-logo-mark {
+  width: 36px; height: 36px;
+  background: var(--bluedim);
+  border: 1px solid var(--blue)44;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-pulse {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+.login-logo-text {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: .03em;
+}
+.login-logo-sub {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.login-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+.login-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.form-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.form-input:focus { border-color: var(--blue)66; }
+.form-input::placeholder { color: var(--text3); }
+.form-select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+.btn-primary {
+  width: 100%;
+  background: var(--blue);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background var(--transition);
+  margin-top: 8px;
+}
+.btn-primary:hover { background: var(--blue2); }
+.login-team-hint {
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--text3);
+  text-align: center;
+}
+.login-team-hint b { color: var(--text2); font-weight: 500; }
+
+/* ===== MAIN APP SHELL ===== */
+#app { display: none; min-height: 100vh; }
+
+/* TOPBAR */
+.topbar {
+  height: 52px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.tb-logo {
+  display: flex; align-items: center; gap: 9px;
+  margin-right: 24px; flex-shrink: 0;
+}
+.tb-logo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: pulse 2s ease-in-out infinite;
+}
+.tb-logo-text {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: .03em;
+}
+.tb-nav { display: flex; gap: 2px; flex: 1; }
+.tb-nav-btn {
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.tb-nav-btn:hover { color: var(--text); background: var(--bg3); }
+.tb-nav-btn.active { color: var(--blue); background: var(--bluedim); }
+.tb-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.inc-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--red)55;
+  color: var(--red);
+  letter-spacing: .05em;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.inc-badge:hover, .inc-badge.pulsing {
+  background: var(--reddim);
+  border-color: var(--red);
+  animation: inc-pulse 1.5s ease-in-out infinite;
+}
+@keyframes inc-pulse { 0%,100%{border-color:var(--red)} 50%{border-color:var(--red)44} }
+
+.user-chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 10px 4px 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.user-chip:hover { border-color: var(--border3); }
+.user-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--blue2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+}
+.user-name { font-size: 12px; color: var(--text2); }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 52px); }
+@media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+@media (max-width: 720px) { .sidebar { display: none; } }
+.nav-group-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 10px 16px 5px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 16px;
+  color: var(--text2);
+  font-size: 13px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all var(--transition);
+  user-select: none;
+}
+.nav-item:hover { color: var(--text); background: var(--bg3); }
+.nav-item.active { color: var(--blue); border-left-color: var(--blue); background: var(--bluedim); }
+.nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: .7; }
+.nav-item.active svg { opacity: 1; }
+.nav-badge {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--bg4);
+  color: var(--text3);
+  min-width: 20px;
+  text-align: center;
+}
+.nav-badge.alert { background: var(--reddim); color: var(--red); }
+.nav-badge.ok { background: var(--greendim); color: var(--green); }
+
+.sidebar-system {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+.sys-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.sys-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 0;
+  font-size: 11px;
+  color: var(--text2);
+}
+.sys-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.sys-dot.green { background: var(--green); }
+.sys-dot.amber { background: var(--amber); }
+.sys-dot.red { background: var(--red); }
+
+/* MAIN CONTENT */
+.main-content { overflow-y: auto; padding: 24px; background: var(--bg); }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ===== SHARED COMPONENTS ===== */
+.page-header { margin-bottom: 22px; }
+.page-title { font-size: 20px; font-weight: 600; }
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.card + .card { margin-top: 12px; }
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.tag-sap  { background: #1a3d6633; color: #60a5fa; }
+.tag-db   { background: #4a2c0033; color: #fbbf24; }
+.tag-aix  { background: #50100033; color: #f87171; }
+.tag-po   { background: #2d1b6633; color: #a78bfa; }
+.tag-abap { background: #05411e33; color: #34d399; }
+
+/* ===== DASHBOARD ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+.kpi {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: default;
+  transition: border-color var(--transition);
+}
+.kpi:hover { border-color: var(--border2); }
+.kpi-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.kpi-val { font-size: 26px; font-weight: 600; }
+.kpi-val.blue { color: var(--blue); }
+.kpi-val.green { color: var(--green); }
+.kpi-val.red { color: var(--red); }
+.kpi-val.amber { color: var(--amber); }
+.kpi-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+@media (max-width: 800px) { .dash-grid { grid-template-columns: 1fr; } }
+
+.inc-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg3);
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--transition);
+  margin-bottom: 6px;
+}
+.inc-row:last-child { margin-bottom: 0; }
+.inc-row:hover { border-color: var(--border2); }
+.inc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-open  { background: var(--red); box-shadow: 0 0 6px var(--red)66; }
+.dot-prog  { background: var(--amber); }
+.dot-done  { background: var(--green); }
+.inc-info { flex: 1; min-width: 0; }
+.inc-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inc-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.inc-pct { font-family: var(--mono); font-size: 11px; color: var(--text2); flex-shrink: 0; }
+
+.act-list { display: flex; flex-direction: column; }
+.act-item {
+  display: flex; gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.act-item:last-child { border-bottom: none; }
+.act-time { font-family: var(--mono); font-size: 10px; color: var(--text3); white-space: nowrap; min-width: 44px; padding-top: 2px; }
+.act-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.act-text strong { color: var(--text); font-weight: 500; }
+
+.layer-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+@media (max-width: 800px) { .layer-grid { grid-template-columns: repeat(3, 1fr); } }
+.layer-card {
+  background: var(--bg3);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+}
+.layer-card:hover { border-color: var(--border2); }
+.layer-name { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 8px; }
+.layer-count { font-size: 22px; font-weight: 600; }
+.layer-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.layer-bar { height: 3px; background: var(--bg5); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.layer-fill { height: 100%; border-radius: 2px; transition: width .5s ease; }
+
+/* ===== CHECKLIST ===== */
+.cl-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.cl-title { font-size: 15px; font-weight: 600; flex: 1; min-width: 200px; }
+.btn-sm {
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  background: transparent;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-sm:hover { color: var(--text); border-color: var(--border3); }
+.btn-sm.primary { background: var(--blue); color: #fff; border-color: transparent; }
+.btn-sm.primary:hover { background: var(--blue2); }
+.btn-sm.danger { background: var(--reddim); color: var(--red); border-color: var(--red)33; }
+
+.progress-track { background: var(--bg3); border-radius: 20px; height: 5px; margin-bottom: 14px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 20px; background: var(--blue); transition: width .4s; }
+
+.cl-stats-row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.cl-stat { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 5px; }
+.cl-stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.filter-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.pill {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--mono);
+}
+.pill:hover { border-color: var(--border3); color: var(--text); }
+.pill.active-all   { background: var(--bluedim); color: var(--blue); border-color: var(--blue)44; }
+.pill.active-SAP   { background: #1a3d6633; color: #60a5fa; border-color: #3b82f644; }
+.pill.active-DB    { background: #4a2c0033; color: #fbbf24; border-color: #f59e0b44; }
+.pill.active-AIX   { background: #50100033; color: #f87171; border-color: #ef444444; }
+.pill.active-PO    { background: #2d1b6633; color: #a78bfa; border-color: #8b5cf644; }
+.pill.active-ABAP  { background: #05411e33; color: #34d399; border-color: #10b98144; }
+.pill.active-flag  { background: var(--reddim); color: var(--red); border-color: var(--red)44; }
+
+.chk-section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 14px 0 6px;
+}
+.chk-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+.chk-item.status-ok   { border-color: #0fba7e22; }
+.chk-item.status-flag { border-color: #f0444422; }
+.chk-item.status-skip { opacity: .55; }
+
+.chk-head {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 13px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.chk-head:hover { background: var(--bg3); }
+
+.chk-cb {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border3);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.chk-cb:hover { border-color: var(--blue)66; }
+.chk-cb.ok   { background: var(--green); border-color: var(--green); }
+.chk-cb.flag { background: var(--red); border-color: var(--red); }
+.chk-cb.skip { background: var(--bg5); border-color: var(--bg5); }
+
+.chk-info { flex: 1; min-width: 0; }
+.chk-name {
+  font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+}
+.chk-item.status-ok .chk-name { color: var(--text3); }
+.chk-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+.crit-pip { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.crit-h { background: var(--red); }
+.crit-m { background: var(--amber); }
+.crit-l { background: var(--green); }
+.chk-chevron { font-size: 9px; color: var(--text3); margin-top: 4px; transition: transform .2s; flex-shrink: 0; }
+.chk-item.open .chk-chevron { transform: rotate(90deg); }
+
+.chk-body { display: none; border-top: 1px solid var(--border); }
+.chk-item.open .chk-body { display: block; }
+.chk-body-inner { padding: 14px 13px; }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+@media (max-width: 560px) { .detail-grid { grid-template-columns: 1fr; } }
+
+.dc {
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.dc-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.dc-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.dc-text strong { color: var(--text); font-weight: 500; }
+.dc.normal .dc-text { color: var(--green); }
+.dc.alert  .dc-text { color: #f87171; }
+
+.code-block {
+  background: #050a12;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #7dd3fc;
+  margin: 10px 0;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.75;
+}
+
+.verdict-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.verdict-btn {
+  font-size: 11px;
+  padding: 5px 13px;
+  border-radius: 5px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  transition: all var(--transition);
+}
+.verdict-btn:hover { background: var(--bg4); color: var(--text); }
+.verdict-btn.ok   { border-color: var(--green)55; color: var(--green); }
+.verdict-btn.ok:hover   { background: var(--greendim); }
+.verdict-btn.flag { border-color: var(--red)55; color: var(--red); }
+.verdict-btn.flag:hover { background: var(--reddim); }
+
+.note-area {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 8px 11px;
+  color: var(--text);
+  font-size: 12px;
+  resize: vertical;
+  min-height: 54px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.note-area:focus { border-color: var(--blue)44; }
+.note-area::placeholder { color: var(--text3); }
+
+.assigned-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text2);
+}
+.assigned-avatar {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ===== HISTORY ===== */
+.hist-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-bottom: 10px;
+}
+.hist-card:hover { border-color: var(--border2); }
+.hist-header { display: flex; align-items: flex-start; gap: 12px; }
+.hist-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.hist-icon.done { background: var(--greendim); color: var(--green); }
+.hist-icon.open { background: var(--reddim); color: var(--red); }
+.hist-name { font-size: 13px; font-weight: 500; }
+.hist-meta { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.hist-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.htag {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg4);
+  color: var(--text2);
+}
+.htag.green { background: var(--greendim); color: var(--green); }
+.htag.red   { background: var(--reddim);   color: var(--red); }
+.htag.blue  { background: var(--bluedim);  color: var(--blue); }
+.hist-root {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.hist-root-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.hist-root-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.hist-root-text strong { color: var(--text); font-weight: 500; }
+
+/* ===== REPORT ===== */
+.report-header {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.finding-item {
+  display: flex; gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg3);
+  border-radius: 6px;
+  margin-bottom: 5px;
+  border-left: 3px solid transparent;
+}
+.finding-item.high { border-left-color: var(--red); }
+.finding-item.med  { border-left-color: var(--amber); }
+.finding-item.ok   { border-left-color: var(--green); }
+.finding-txn {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  min-width: 72px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.finding-body { flex: 1; }
+.finding-name { font-size: 12px; font-weight: 500; color: var(--text); }
+.finding-note { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+/* ===== TEAM VIEW ===== */
+.team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (max-width: 640px) { .team-grid { grid-template-columns: 1fr; } }
+.team-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.team-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+.team-info { flex: 1; }
+.team-name { font-size: 13px; font-weight: 500; }
+.team-role { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.team-status { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 11px; color: var(--text2); }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: #00000099;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+.modal-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 26px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 22px; }
+.btn-modal-ghost {
+  font-size: 13px; padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  transition: all var(--transition);
+}
+.btn-modal-ghost:hover { color: var(--text); border-color: var(--border3); }
+.btn-modal-primary {
+  font-size: 13px; padding: 8px 18px;
+  border-radius: 6px;
+  background: var(--blue);
+  color: #fff;
+  transition: background var(--transition);
+}
+.btn-modal-primary:hover { background: var(--blue2); }
+
+/* ===== NOTIFICATIONS ===== */
+.toast-container {
+  position: fixed;
+  top: 62px;
+  right: 16px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.toast {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+  min-width: 240px;
+  animation: toastIn .25s ease;
+  box-shadow: 0 4px 24px #00000066;
+}
+@keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ===== UTIL ===== */
+.hidden { display: none !important; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mt-20 { margin-top: 20px; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-mark"><div class="logo-pulse"></div></div>
+      <div>
+        <div class="login-logo-text">SAP BASIS DX</div>
+        <div class="login-logo-sub">Diagnostic Experience</div>
+      </div>
+    </div>
+    <div class="login-title">Bienvenido</div>
+    <div class="login-sub">Ingresa tus datos para acceder al sistema de diagnóstico</div>
+
+    <div class="form-group">
+      <label class="form-label">Usuario SAP / Nombre</label>
+      <input class="form-input" id="login-name" placeholder="Ej: JPEREZ · BASIS Senior" value="">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rol</label>
+      <select class="form-select" id="login-role">
+        <option value="BASIS Senior">BASIS Senior</option>
+        <option value="BASIS Junior">BASIS Junior</option>
+        <option value="DBA DB2">DBA DB2</option>
+        <option value="Infraestructura AIX">Infraestructura AIX</option>
+        <option value="Líder técnico">Líder técnico</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sistema objetivo</label>
+      <select class="form-select" id="login-system">
+        <option>SAP ECC EHP8 · PRD</option>
+        <option>SAP ECC EHP8 · QAS</option>
+        <option>SAP PO 7.5 · PRD</option>
+        <option>SAP S/4HANA · PRD</option>
+      </select>
+    </div>
+
+    <div style="border-top:1px solid var(--border2);margin:18px 0 14px;"></div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+      <strong style="color:var(--text)">Sincronización entre dispositivos (opcional)</strong><br>
+      Configura GitHub Gist para que tus casos se sincronicen entre PC y celular.
+      <span id="gist-help-link" onclick="toggleGistHelp()" style="color:var(--blue);cursor:pointer;text-decoration:underline;margin-left:4px">¿Cómo obtener estos datos?</span>
+    </div>
+    <div id="gist-help-box" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:11px;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--text)">Paso 1:</strong> Ve a github.com → tu avatar → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic). Selecciona solo el scope <strong style="color:var(--blue)">gist</strong>. Copia el token.<br>
+      <strong style="color:var(--text)">Paso 2:</strong> Ve a gist.github.com → New gist. Nombre del archivo: <strong style="color:var(--blue)">sapdx_data.json</strong>. Contenido: <strong style="color:var(--blue)">{}</strong>. Selecciona <strong>Secret</strong>. Copia el ID de la URL (los 32 caracteres después de gist.github.com/tuusuario/).
+    </div>
+    <div class="form-group">
+      <label class="form-label">GitHub Token (scope: gist)</label>
+      <input class="form-input" id="login-gist-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (opcional)" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Gist ID</label>
+      <input class="form-input" id="login-gist-id" placeholder="abc123def456... (32 caracteres, opcional)" autocomplete="off">
+    </div>
+
+    <button class="btn-primary" onclick="doLogin()">Ingresar al sistema</button>
+    <div class="login-team-hint" style="margin-top:12px">Sin Gist: los datos se guardan solo en este dispositivo · Con Gist: sincronizado entre todos tus dispositivos</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo">
+      <div class="tb-logo-dot"></div>
+      <div class="tb-logo-text">BASIS DX</div>
+    </div>
+    <div class="tb-nav">
+      <button class="tb-nav-btn active" onclick="goView('dashboard',this)">Dashboard</button>
+      <button class="tb-nav-btn" onclick="goView('checklist',this)">Diagnóstico</button>
+      <button class="tb-nav-btn" onclick="goView('history',this)">Casos</button>
+      <button class="tb-nav-btn" onclick="goView('report',this)">Reporte</button>
+      <button class="tb-nav-btn" onclick="goView('team',this)">Equipo</button>
+    </div>
+    <div class="tb-right">
+      <button class="inc-badge pulsing" id="inc-btn" onclick="openModal('new-incident')">+ INCIDENTE</button>
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2)">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--green)" id="sync-dot"></div>
+        <span id="sync-status" style="font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer" onclick="manualSync()" title="Clic para sincronizar ahora">Sin Gist — local</span>
+      </div>
+      <button style="font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);color:var(--text3);cursor:pointer;background:transparent" onclick="resetCache()" title="Limpiar datos locales">↺ RESET</button>
+      <div class="user-chip" onclick="showToast('Sesión activa · '+APP.user,'blue')">
+        <div class="user-avatar" id="tb-avatar">BS</div>
+        <div class="user-name" id="tb-username">BASIS Senior</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="nav-group-label">Diagnóstico</div>
+      <div class="nav-item active" onclick="goView('dashboard',null); setNavActive(this)">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.2"/><rect x="9" y="1" width="6" height="6" rx="1.2"/><rect x="1" y="9" width="6" height="6" rx="1.2"/><rect x="9" y="9" width="6" height="6" rx="1.2"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="goView('checklist',null); setNavActive(this)">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M6 4h8M6 8h8M6 12h8"/><circle cx="2.5" cy="4" r="1.2"/><circle cx="2.5" cy="8" r="1.2"/><circle cx="2.5" cy="12" r="1.2"/></svg>
+        Checklist activo
+        <span class="nav-badge alert" id="nb-flags">0</span>
+      </div>
+      <div class="nav-item" onclick="goView('history',null); setNavActive(this)">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4.5v3.5l2 2"/></svg>
+        Historial
+        <span class="nav-badge ok">4</span>
+      </div>
+      <div class="nav-item" onclick="goView('report',null); setNavActive(this)">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+        Reporte
+      </div>
+      <div class="nav-item" onclick="goView('team',null); setNavActive(this)">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-3 2.2-5 5-5s5 2 5 5"/><circle cx="12" cy="6" r="2"/><path d="M10 14c0-1.5.9-3 2-3"/></svg>
+        Equipo
+        <span class="nav-badge" id="nb-team">3</span>
+      </div>
+
+      <div class="nav-group-label" style="margin-top:8px">Sistema</div>
+      <div class="nav-item" style="cursor:default">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M5 13v2M11 13v2M3 15h10"/></svg>
+        <div>
+          <div style="font-size:12px" id="sys-name">CEP · PRD</div>
+          <div style="font-size:10px;color:var(--text3)" id="sys-label">SAP ECC EHP8 · Compensar</div>
+        </div>
+      </div>
+
+      <div class="sidebar-system">
+        <div class="sys-label">Estado de capas</div>
+        <div class="sys-item"><div class="sys-dot green"></div>SAP Application</div>
+        <div class="sys-item"><div class="sys-dot amber" id="sys-db-dot"></div>DB2 Instance</div>
+        <div class="sys-item"><div class="sys-dot green"></div>AIX OS</div>
+        <div class="sys-item"><div class="sys-dot green"></div>PO / NetWeaver</div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="page-header">
+          <div class="page-title">Centro de diagnóstico</div>
+          <div class="page-sub" id="dash-system-label">SAP ECC EHP8 · PRD · IBM DB2 · AIX</div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">Incidente activo</div>
+            <div class="kpi-val blue" id="kpi-inc" style="font-size:15px;line-height:1.4">INC-2025-004</div>
+            <div class="kpi-sub" id="kpi-inc-sub">Abre un nuevo caso</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Progreso</div>
+            <div class="kpi-val" id="kpi-pct">0%</div>
+            <div class="kpi-sub" id="kpi-pct-sub">0 de 27 pasos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Hallazgos</div>
+            <div class="kpi-val red" id="kpi-flags">0</div>
+            <div class="kpi-sub">ítems con alerta</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Verificados</div>
+            <div class="kpi-val green" id="kpi-ok">0</div>
+            <div class="kpi-sub">sin problema</div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="card">
+            <div class="section-label">Incidentes recientes</div>
+            <div id="dash-inc-list">
+              <div class="inc-row" onclick="goView('checklist',null)">
+                <div class="inc-dot dot-open"></div>
+                <div class="inc-info">
+                  <div class="inc-name" id="dash-active-inc-name">Sin caso activo</div>
+                  <div class="inc-meta" id="dash-active-inc-meta">Abre un nuevo caso para comenzar</div>
+                </div>
+                <div class="inc-pct" id="dash-active-pct">0%</div>
+              </div>
+              <div class="inc-row" onclick="goView('history',null)">
+                <div class="inc-dot dot-done"></div>
+                <div class="inc-info"><div class="inc-name">INC-2025-003 — Job RPCALC lento</div><div class="inc-meta">Cerrado · hace 2 días</div></div>
+                <div class="inc-pct">100%</div>
+              </div>
+              <div class="inc-row" onclick="goView('history',null)">
+                <div class="inc-dot dot-done"></div>
+                <div class="inc-info"><div class="inc-name">INC-2025-002 — SMQ1 acumulando</div><div class="inc-meta">Cerrado · hace 5 días</div></div>
+                <div class="inc-pct">100%</div>
+              </div>
+              <div class="inc-row" onclick="goView('history',null)">
+                <div class="inc-dot dot-done"></div>
+                <div class="inc-info"><div class="inc-name">INC-2025-001 — Timeout cierre de mes</div><div class="inc-meta">Cerrado · hace 12 días</div></div>
+                <div class="inc-pct">100%</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-label">Actividad del equipo</div>
+            <div class="act-list" id="activity-feed">
+              <div class="act-item"><div class="act-time">2d</div><div class="act-text"><strong>SM37</strong> — Job RPCALC identificado como causa raíz</div></div>
+              <div class="act-item"><div class="act-time">2d</div><div class="act-text">INC-003 cerrado — <strong>batch compitiendo con online</strong></div></div>
+              <div class="act-item"><div class="act-time">5d</div><div class="act-text"><strong>SMQ1</strong> cola SYSFAIL liberada en PO</div></div>
+              <div class="act-item"><div class="act-time">5d</div><div class="act-text">INC-002 cerrado — <strong>canal PO SSL expirado</strong></div></div>
+              <div class="act-item"><div class="act-time">12d</div><div class="act-text">INC-001 cerrado — <strong>lock enqueue + RAM 94%</strong></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-label">Estado por capa</div>
+          <div class="layer-grid" id="layer-status-grid"></div>
+        </div>
+      </div>
+
+      <!-- CHECKLIST -->
+      <div class="view" id="view-checklist">
+        <div class="cl-toolbar">
+          <div class="cl-title" id="cl-inc-title">Selecciona o crea un incidente para comenzar</div>
+          <button class="btn-sm" onclick="openModal('new-incident')">+ Nuevo incidente</button>
+          <button class="btn-sm primary" onclick="goView('report',null)">Generar reporte</button>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="cl-prog" style="width:0%"></div></div>
+        <div class="cl-stats-row">
+          <div class="cl-stat"><div class="cl-stat-dot" style="background:var(--green)"></div><span id="stat-ok">0 verificados</span></div>
+          <div class="cl-stat"><div class="cl-stat-dot" style="background:var(--red)"></div><span id="stat-flag">0 hallazgos</span></div>
+          <div class="cl-stat"><div class="cl-stat-dot" style="background:var(--text3)"></div><span id="stat-skip">0 omitidos</span></div>
+          <div class="cl-stat" style="margin-left:auto"><div class="cl-stat-dot" style="background:var(--blue)"></div><span id="stat-pct">0% completado</span></div>
+        </div>
+        <div class="filter-pills">
+          <div class="pill active-all" data-layer="all" onclick="setLayer(this)">Todos</div>
+          <div class="pill" data-layer="SAP"  onclick="setLayer(this)">SAP BASIS</div>
+          <div class="pill" data-layer="DB"   onclick="setLayer(this)">DB2</div>
+          <div class="pill" data-layer="AIX"  onclick="setLayer(this)">AIX</div>
+          <div class="pill" data-layer="PO"   onclick="setLayer(this)">PO</div>
+          <div class="pill" data-layer="ABAP" onclick="setLayer(this)">ABAP</div>
+          <div class="pill" data-layer="flag" onclick="setLayer(this)" style="border-color:var(--red)33;color:var(--red)77">Solo hallazgos</div>
+        </div>
+        <div id="cl-list"></div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="view" id="view-history">
+        <div class="page-header flex-between" style="flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="page-title">Gestión de casos</div>
+            <div class="page-sub">Consecutivo automático · historial completo · adjuntos · causa raíz</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="hist-search" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;color:var(--text);font-size:12px;outline:none;width:180px" placeholder="Buscar por ID, título..." oninput="renderHistory()">
+            <select id="hist-filter" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text2);font-size:12px;outline:none" onchange="renderHistory()">
+              <option value="">Todos los casos</option>
+              <option value="open">Abiertos</option>
+              <option value="closed">Cerrados</option>
+              <option value="P1">P1 — Crítico</option>
+              <option value="P2">P2 — Alto</option>
+            </select>
+          </div>
+        </div>
+        <div id="hist-stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
+        <div id="history-list"></div>
+
+        <div class="card" style="margin-top:14px">
+          <div class="section-label">Línea base tiempos de respuesta ERP PRD — Compensar (ms)</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Reportar desviación al área BASIS. Umbral SMLG: alertar si &gt; 1000 ms. Fuente: Manual Monitoreo Compensar.</div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono)">
+            <thead><tr style="border-bottom:1px solid var(--border2)">
+              <th style="text-align:left;padding:5px 8px;color:var(--text3);font-weight:500">Transacción</th>
+              <th style="padding:5px 8px;color:var(--text3);font-weight:500;text-align:right;white-space:nowrap">Lun</th>
+              <th style="padding:5px 8px;color:var(--text3);font-weight:500;text-align:right;white-space:nowrap">Mar</th>
+              <th style="padding:5px 8px;color:var(--text3);font-weight:500;text-align:right;white-space:nowrap">Mié</th>
+              <th style="padding:5px 8px;color:var(--text3);font-weight:500;text-align:right;white-space:nowrap">Jue</th>
+              <th style="padding:5px 8px;color:var(--text3);font-weight:500;text-align:right;white-space:nowrap">Vie</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;color:var(--text2)">N1PATORG</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.230</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.329</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.329</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.263</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.242</td></tr>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;color:var(--text2)">SIE ZPOII_AGENDA_DISP_IN</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.119</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">981</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.207</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">1.055</td><td style="padding:5px 8px;text-align:right;color:var(--amber)">983</td></tr>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;color:var(--text2)">NV2000</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">864</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">836</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">874</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">810</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">824</td></tr>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;color:var(--text2)">NWP1</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">859</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">845</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">878</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">855</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">845</td></tr>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;color:var(--text2)">ZISHPM_034</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">739</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">709</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">743</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">695</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">712</td></tr>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;color:var(--text2)">/IBMISHC/FI_CAJA</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">603</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">586</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">634</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">603</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">562</td></tr>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;color:var(--text2)">NR16</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">489</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">502</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">509</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">478</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">492</td></tr>
+              <tr><td style="padding:5px 8px;color:var(--text2)">SIE ZPO_CONSULTAS_CITAS_IN</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">296</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">305</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">365</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">327</td><td style="padding:5px 8px;text-align:right;color:var(--text2)">311</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="card" style="margin-top:10px">
+          <div class="section-label">Jobs críticos Compensar — SM37 (llamar al Basis si aparecen cancelados)</div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr style="border-bottom:1px solid var(--border2)">
+              <th style="text-align:left;padding:5px 8px;color:var(--text3);font-weight:500;font-family:var(--mono)">Job</th>
+              <th style="text-align:left;padding:5px 8px;color:var(--text3);font-weight:500">Descripción</th>
+              <th style="text-align:left;padding:5px 8px;color:var(--text3);font-weight:500">Impacto</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:0.5px solid var(--border)"><td style="padding:5px 8px;font-family:var(--mono);color:var(--red)">ZISHPMD0001</td><td style="padding:5px 8px;color:var(--text2)">Liberación tipos de planificación ROBOT</td><td style="padding:5px 8px;color:var(--amber)">Crítico — llamar al Basis</td></tr>
+              <tr><td style="padding:5px 8px;font-family:var(--mono);color:var(--red)">ZFID0004</td><td style="padding:5px 8px;color:var(--text2)">Cierre diario cajas automáticas CS 1000</td><td style="padding:5px 8px;color:var(--amber)">Crítico — llamar al Basis</td></tr>
+            </tbody>
+          </table></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:8px;font-family:var(--mono)">Verificar en SM37 diariamente antes de 6:00 AM · Jobs activos después de las 6 AM deben ser cancelados</div>
+        </div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="view" id="view-report">
+        <div class="report-header">
+          <div style="flex:1">
+            <div class="page-title">Reporte de diagnóstico</div>
+            <div class="page-sub" id="rep-header-sub">Generado automáticamente desde el checklist</div>
+          </div>
+          <button class="btn-sm primary" onclick="copyReport()">Copiar reporte</button>
+          <button class="btn-sm" onclick="printReport()">Imprimir / PDF</button>
+        </div>
+        <div class="card" id="report-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">
+            <div class="dc"><div class="dc-label">Incidente</div><div class="dc-text" id="rep-inc-name">—</div></div>
+            <div class="dc"><div class="dc-label">Inicio diagnóstico</div><div class="dc-text" id="rep-start">—</div></div>
+            <div class="dc"><div class="dc-label">Analista</div><div class="dc-text" id="rep-analyst">—</div></div>
+          </div>
+          <div class="dc" style="margin-bottom:18px"><div class="dc-label">Síntoma reportado</div><div class="dc-text" id="rep-symptom">—</div></div>
+          <div class="section-label">Hallazgos — ítems con alerta</div>
+          <div id="rep-findings"><div style="font-size:12px;color:var(--text3);padding:10px 0">Sin hallazgos. Completa el checklist primero.</div></div>
+          <div class="section-label mt-16">Verificados sin problema</div>
+          <div id="rep-ok-list"><div style="font-size:12px;color:var(--text3);padding:10px 0">Sin ítems verificados aún.</div></div>
+          <div class="section-label mt-16">Causa raíz · conclusión final</div>
+          <textarea class="note-area" id="rep-conclusion" style="min-height:90px;width:100%" placeholder="Escribe aquí la causa raíz identificada, la acción correctiva aplicada y el resultado..."></textarea>
+          <div class="section-label mt-16">Estado</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-sm" onclick="setRepStatus('En diagnóstico')">En diagnóstico</button>
+            <button class="btn-sm" onclick="setRepStatus('Causa identificada')">Causa identificada</button>
+            <button class="btn-sm primary" onclick="setRepStatus('Resuelto')">Marcar como resuelto</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEAM -->
+      <div class="view" id="view-team">
+        <div class="page-header">
+          <div class="page-title">Equipo BASIS</div>
+          <div class="page-sub">Analistas activos en esta sesión de diagnóstico</div>
+        </div>
+        <div class="team-grid" id="team-grid">
+          <div class="team-card">
+            <div class="team-avatar" style="background:var(--blue2)" id="my-avatar-team">BS</div>
+            <div class="team-info">
+              <div class="team-name" id="my-name-team">BASIS Senior</div>
+              <div class="team-role">BASIS Senior · Analista principal</div>
+              <div class="team-status"><div class="sys-dot green"></div>Activo ahora</div>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:#6d28d9">MV</div>
+            <div class="team-info">
+              <div class="team-name">M. Vargas</div>
+              <div class="team-role">DBA DB2 · Soporte DB</div>
+              <div class="team-status"><div class="sys-dot amber"></div>Inactivo hace 20 min</div>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:#0f766e">JR</div>
+            <div class="team-info">
+              <div class="team-name">J. Ramírez</div>
+              <div class="team-role">Infraestructura AIX</div>
+              <div class="team-status"><div class="sys-dot green"></div>Activo ahora</div>
+            </div>
+          </div>
+          <div class="team-card" style="border-style:dashed;cursor:pointer" onclick="showToast('Función de invitación disponible en versión backend','blue')">
+            <div class="team-avatar" style="background:var(--bg4);font-size:20px;color:var(--text3)">+</div>
+            <div class="team-info">
+              <div class="team-name" style="color:var(--text2)">Invitar analista</div>
+              <div class="team-role" style="color:var(--text3)">Comparte el incidente con otro miembro del equipo</div>
+            </div>
+          </div>
+        </div>
+        <div class="card mt-20">
+          <div class="section-label">Asignación de pasos por analista</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8">
+            En la vista de checklist, cada paso puede ser asignado a un analista específico del equipo. El analista asignado ve el paso resaltado en su vista.<br><br>
+            <strong style="color:var(--text)">Sugerencia de distribución:</strong><br>
+            · BASIS Senior → Pasos A, B, F, G (SAP, ABAP, Batch, PO)<br>
+            · DBA DB2 → Pasos C (DB2 completo)<br>
+            · Infra AIX → Pasos D, E (AIX, Storage, Red)
+          </div>
+        </div>
+
+        <div class="card mt-20">
+          <div class="section-label">Sincronización GitHub Gist</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+            Configura o actualiza las credenciales de GitHub Gist para sincronizar los casos entre PC y celular. Los datos se guardan también localmente como respaldo.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Estado actual</div>
+              <div style="font-size:12px;display:flex;align-items:center;gap:6px">
+                <div id="settings-sync-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
+                <span id="settings-sync-label" style="color:var(--text2)">Sin configurar</span>
+              </div>
+            </div>
+            <div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Gist ID configurado</div>
+              <div id="settings-gist-id-display" style="font-family:var(--mono);font-size:11px;color:var(--text2)">—</div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">GitHub Token (scope: gist)</label>
+            <input id="settings-gist-token" type="password" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;outline:none" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Gist ID</label>
+            <input id="settings-gist-id" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;outline:none" placeholder="abc123def456..." autocomplete="off">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="saveGistSettings()" style="font-size:12px;padding:7px 16px;border-radius:6px;background:var(--blue);color:#fff;border:none;cursor:pointer">Guardar credenciales</button>
+            <button onclick="manualSync()" style="font-size:12px;padding:7px 16px;border-radius:6px;background:transparent;color:var(--text2);border:1px solid var(--border2);cursor:pointer">Sincronizar ahora</button>
+            <button onclick="exportJSON()" style="font-size:12px;padding:7px 16px;border-radius:6px;background:transparent;color:var(--text2);border:1px solid var(--border2);cursor:pointer">Exportar JSON</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL NEW INCIDENT -->
+<div class="modal-overlay hidden" id="modal-new-incident">
+  <div class="modal-box">
+    <div class="modal-title">Nuevo caso de diagnóstico</div>
+    <div class="modal-sub" id="f-case-id-label">El número de caso se genera automáticamente</div>
+    <div class="form-group">
+      <label class="form-label">Título del caso</label>
+      <input class="form-input" id="f-name" placeholder="Ej: Lentitud general PRD — horario pico">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción del síntoma</label>
+      <textarea class="form-input" id="f-symptom" style="resize:vertical;min-height:80px" placeholder="Qué ocurre, desde cuándo, quiénes están afectados, transacciones impactadas..."></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label class="form-label">Prioridad</label>
+        <select class="form-select" id="f-priority">
+          <option value="P1">P1 — Crítico (producción parada)</option>
+          <option value="P2">P2 — Alto (degradación severa)</option>
+          <option value="P3" selected>P3 — Medio (lentitud parcial)</option>
+          <option value="P4">P4 — Bajo (usuario aislado)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Capa sospechosa inicial</label>
+        <select class="form-select" id="f-layers">
+          <option value="">No definido aún</option>
+          <option value="SAP">SAP BASIS / Aplicación</option>
+          <option value="DB">DB2 — Base de datos</option>
+          <option value="AIX">AIX — Sistema operativo</option>
+          <option value="PO">PO / Integración</option>
+          <option value="ABAP">ABAP / Código</option>
+          <option value="Multiple">Múltiples capas</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mensaje de error / evidencia inicial (opcional)</label>
+      <textarea class="form-input" id="f-error-msg" style="resize:vertical;min-height:70px;font-family:var(--font-mono,monospace);font-size:12px" placeholder="Pega aquí el mensaje de error, dump, log o cualquier evidencia inicial..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Adjuntar archivo (screenshot, log, dump)</label>
+      <div id="drop-zone" style="border:1px dashed var(--border2);border-radius:6px;padding:16px;text-align:center;cursor:pointer;transition:all .15s;color:var(--text3);font-size:12px" onclick="document.getElementById('f-file-input').click()" ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">
+        Haz clic o arrastra archivos aquí (PNG, JPG, PDF, TXT, LOG — máx 2MB)
+      </div>
+      <input type="file" id="f-file-input" style="display:none" accept=".png,.jpg,.jpeg,.pdf,.txt,.log,.csv" multiple onchange="handleFiles(this.files)">
+      <div id="f-file-list" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-ghost" onclick="closeModal('new-incident')">Cancelar</button>
+      <button class="btn-modal-primary" onclick="createIncident()">Abrir caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CASE DETAIL -->
+<div class="modal-overlay hidden" id="modal-case-detail">
+  <div class="modal-box" style="max-width:600px">
+    <div id="md-header" style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div id="md-id" style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;background:var(--bluedim);color:var(--blue)"></div>
+      <div id="md-priority" style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px"></div>
+      <div id="md-status-badge" style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;margin-left:auto"></div>
+    </div>
+    <div class="modal-title" id="md-title" style="margin-bottom:2px"></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:16px" id="md-meta"></div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;background:var(--bg3);border-radius:6px;padding:10px 12px" id="md-symptom"></div>
+    <div id="md-error-block" style="display:none;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px">Mensaje de error / evidencia</div>
+      <pre id="md-error" style="font-family:var(--mono);font-size:11px;color:#7dd3fc;background:#050a12;border:1px solid var(--border2);border-radius:6px;padding:10px 12px;white-space:pre-wrap;max-height:140px;overflow-y:auto;line-height:1.6"></pre>
+    </div>
+    <div id="md-attachments-block" style="display:none;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Archivos adjuntos</div>
+      <div id="md-attachments-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div id="md-findings-block" style="display:none;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Hallazgos del checklist</div>
+      <div id="md-findings-list"></div>
+    </div>
+    <div id="md-root-block" style="display:none;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px">Causa raíz documentada</div>
+      <div id="md-root" style="font-size:12px;color:var(--text2);line-height:1.6;background:var(--greendim);border-radius:6px;padding:10px 12px;border:1px solid var(--green)22"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-ghost" onclick="closeModal('case-detail')">Cerrar</button>
+      <button class="btn-modal-ghost" id="md-load-btn" onclick="loadCaseFromDetail()">Cargar en diagnóstico</button>
+      <button class="btn-modal-primary" id="md-close-case-btn" onclick="closeCaseFromDetail()">Cerrar caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ========== DATA ==========
+const CHECKS = [
+  {id:'c01',layer:'SAP',crit:'h',sec:'A. Primer vistazo — primeros 5 minutos',
+   name:'SM50 / SM66 — Estado de work processes',sub:'Foto del sistema: WPs libres, corriendo o colgados',
+   txn:'SM50 · SM66',qrev:'¿Cuántos DIA en Running >5 min? ¿WPs en PRIV? ¿BTC/UPD todos ocupados?',
+   ok:'Mayoría en Wait. Running resuelven en <60s.',bad:'Todos DIA Running >5 min. WPs en PRIV. BTC/UPD colgados.',
+   interp:'<strong>Todos DIA ocupados:</strong> saturación → dispatcher. <strong>PRIV:</strong> presión RAM → vmstat AIX urgente. <strong>UPD colgados:</strong> ir a SM13.',
+   next:'Si WPs colgados: ver columna Action en SM50. Si PRIV: vmstat + svmon en AIX.'},
+  {id:'c02',layer:'SAP',crit:'h',sec:'A. Primer vistazo — primeros 5 minutos',
+   name:'AL08 — Usuarios activos por instancia',sub:'Cuántos usuarios hay y en qué instancias están concentrados',
+   txn:'AL08',qrev:'¿Hay concentración en una sola instancia? ¿Coincide con WPs saturados?',
+   ok:'Distribución pareja entre instancias.',bad:'Una instancia con 10× más usuarios que las demás.',
+   interp:'Si una instancia concentra la carga y sus WPs están saturados → balanceo o login groups (SMLG).',
+   next:'Revisar SMLG. Si carga balanceada y aun así lento → problema sistémico.'},
+  {id:'c03',layer:'SAP',crit:'h',sec:'A. Primer vistazo — primeros 5 minutos',
+   name:'SM21 — System log (últimas 2 horas)',sub:'Detectar errores del kernel: DB, dispatcher, enqueue, memoria',
+   txn:'SM21',qrev:'Mensajes DBIF_*, DP_*, DU_*, reinicios de WP, errores de enqueue.',
+   ok:'Log limpio o solo mensajes informativos.',bad:'DBIF_*, DP_CANT_CREATE_WP, reinicios frecuentes de WP.',
+   interp:'<strong>DBIF_*:</strong> error desde DB2. <strong>DP_*:</strong> problema dispatcher. <strong>Reinicios WP:</strong> dump por ABAP o memoria.',
+   next:'Si errores DB2 → db2diag.log + MON_LOCKWAITS. Si reinicios → ST22.'},
+  {id:'c04',layer:'SAP',crit:'m',sec:'A. Primer vistazo — primeros 5 minutos',
+   name:'ST06 — OS Monitor desde SAP',sub:'Ver CPU, memoria y swap del appserver sin salir de SAP',
+   txn:'ST06',qrev:'CPU total %, swap activo, paging rate.',
+   ok:'CPU <70%. Swap=0. Paging=0.',bad:'CPU >90% sostenido. Cualquier swap/paging activo.',
+   interp:'Si paging activo: emergencia, ir a svmon/vmstat inmediatamente. No esperar.',
+   next:'Validar con comandos AIX nativos para evidencia precisa.'},
+  {id:'c05',layer:'SAP',crit:'h',sec:'B. SAP BASIS — workload y estadísticas',
+   name:'ST03N — Workload monitor (tendencia horaria)',sub:'Qué componente domina el tiempo de respuesta y desde cuándo',
+   txn:'ST03N',qrev:'Avg response, % DB time, % CPU time, wait time. Comparar hora pico vs normal.',
+   ok:'Response <1s. DB time <40%. CPU <30%.',bad:'DB time >50%. CPU time >40%. Wait time dominante.',
+   interp:'<strong>DB time domina:</strong> SQL lentas o lock DB2. <strong>CPU time:</strong> ABAP intensivo o CPU saturada en AIX.',
+   next:'DB time alto → ST05 + DB02. CPU time → SE30 + vmstat AIX. Exportar datos del período.'},
+  {id:'c06',layer:'SAP',crit:'h',sec:'B. SAP BASIS — workload y estadísticas',
+   name:'STAD — Estadísticas de transacción individual',sub:'Drill-down en la transacción o usuario que reporta lentitud',
+   txn:'STAD',qrev:'DB time, DB reads/changes, CPU time, programa, RFC calls.',
+   ok:'DB reads <50.000 por transacción. DB time <60%.',bad:'DB reads >500.000. DB time >80%. RFC calls alto.',
+   interp:'<strong>DB reads masivos:</strong> full scan → ST05. <strong>RFC calls alto:</strong> latencia de destino o PO.',
+   next:'Para DB alto: activar ST05 sobre esa transacción. Para RFC: SM59 + PO logs.'},
+  {id:'c07',layer:'SAP',crit:'h',sec:'B. SAP BASIS — workload y estadísticas',
+   name:'SM12 — Enqueue locks SAP',sub:'Detectar si un lock SAP está bloqueando usuarios en cadena',
+   txn:'SM12',qrev:'Locks con antigüedad >30 min sobre objetos de negocio críticos.',
+   ok:'Locks transitorios <5 min. No hay locks de usuario inactivo.',bad:'Lock >30 min. Usuario dueño ya no activo en AL08.',
+   interp:'Lock enqueue huérfano bloquea toda la cadena. Distinto al lock DB2: se libera borrando entrada en SM12 (con cuidado).',
+   next:'Verificar si usuario sigue activo en AL08. Si no: eliminar lock. Si sí: contactar usuario.'},
+  {id:'c08',layer:'SAP',crit:'h',sec:'B. SAP BASIS — workload y estadísticas',
+   name:'SM13 — Update requests pendientes',sub:'Verificar si los updates están procesándose o hay cola bloqueada',
+   txn:'SM13',qrev:'Updates con status Err o acumulados. Hora creación vs hora actual.',
+   ok:'Updates procesados en segundos. Sin status Err.',bad:'Muchos en Err. Antigüedad >10 min sin procesar.',
+   interp:'Updates bloqueados → commit de muchas transacciones pendiente → usuarios perciben que datos no se guardan.',
+   next:'Ver log del update. Usualmente WP de tipo UPD colgado o error DB2 al escribir.'},
+  {id:'c09',layer:'SAP',crit:'m',sec:'B. SAP BASIS — workload y estadísticas',
+   name:'ST22 — Dumps ABAP',sub:'Ver errores de programa en el horario de la lentitud',
+   txn:'ST22',qrev:'Dumps en el período. Tipos: TIMEOUT, MEMORY_NO_MORE_PAGING, DBIF_*, RFC_*.',
+   ok:'0 dumps o dumps aislados no relacionados.',bad:'TIMEOUT masivo. MEMORY_NO_MORE_PAGING. DBIF_*.',
+   interp:'<strong>TIMEOUT masivo:</strong> SQL lock o CPU. <strong>MEMORY_NO_MORE_PAGING:</strong> RAM agotada → vmstat AIX.',
+   next:'Para TIMEOUT: correlacionar con SM50. Para MEMORY: vmstat urgente.'},
+  {id:'c10',layer:'SAP',crit:'m',sec:'B. SAP BASIS — workload y estadísticas',
+   name:'ST02 — Buffers SAP (hit ratio)',sub:'Verificar que los buffers tengan hit ratio adecuado',
+   txn:'ST02',qrev:'Hit ratio Program buffer, Table definition buffer. Swaps activos.',
+   ok:'Hit ratio >98% en buffers críticos. Swaps=0.',bad:'Hit ratio <95%. Swaps >0 activos.',
+   interp:'Buffer bajo → SAP accede a DB2 para cada metadata → overhead extra. Puede ser warmup post-reinicio (esperar 1-2h).',
+   next:'Si bajo persistente: aumentar buffer en RZ10. Si post-reinicio: esperar y remedir.'},
+  {id:'c11',layer:'DB',crit:'h',sec:'C. Base de datos DB2',
+   name:'DB02 / TOP_DYNAMIC_SQL — SQLs más lentas',sub:'Qué sentencias SQL consumen más tiempo en DB2',
+   txn:'DB02 (SAP) · db2 nativo',qrev:'Top SQLs por elapsed time y rows read. Ratio rows read / rows returned.',
+   ok:'Ratio <10:1. Sin TABLESCAN en tablas grandes. Elapsed <1s.',bad:'Ratio >100:1. TABLESCAN en tabla grande. Elapsed >10s recurrente.',
+   code:'db2 "SELECT STMT_TEXT,TOTAL_EXEC_TIME,ROWS_READ,ROWS_RETURNED\n  FROM SYSIBMADM.TOP_DYNAMIC_SQL\n  ORDER BY TOTAL_EXEC_TIME DESC\n  FETCH FIRST 20 ROWS ONLY"',
+   interp:'Ratio alto: DB lee 100 filas para devolver 1 → full scan o índice ineficiente → verificar plan.',
+   next:'Para SQL sospechosa: db2expln para ver plan. Si programa Z → ST05 + dev. Si estándar → RUNSTATS.'},
+  {id:'c12',layer:'DB',crit:'h',sec:'C. Base de datos DB2',
+   name:'MON_LOCKWAITS — Locks activos en DB2',sub:'Verificar si hay aplicaciones esperando locks dentro de DB2',
+   txn:'db2 SQL nativo',qrev:'Aplicaciones en espera. Tabla bloqueada. LOCK_WAIT_ELAPSED_TIME alto.',
+   ok:'Sin entradas activas en MON_LOCKWAITS.',bad:'Entradas con LOCK_WAIT_ELAPSED_TIME >10s.',
+   code:'db2 "SELECT REQUEST_TYPE,TABLENAME,\n  LOCK_WAIT_ELAPSED_TIME\n  FROM SYSIBMADM.MON_LOCKWAITS"',
+   interp:'Lock DB2 se manifiesta en SAP como WPs en Running esperando esa tabla (SM50). Distinto al enqueue SAP.',
+   next:'Identificar handle con lock. Correlacionar con WP en SM50. Si batch sin commit → evaluar rollback.'},
+  {id:'c13',layer:'DB',crit:'h',sec:'C. Base de datos DB2',
+   name:'db2diag.log — Diagnóstico nativo DB2',sub:'Eventos críticos de DB2 en el período de la lentitud',
+   txn:'AIX: grep en /db2/SID/db2dump/',qrev:'SEVERE, ERROR, DEADLOCK, LOG FULL en el horario del síntoma.',
+   ok:'Sin SEVERE ni ERROR. Sin deadlocks. Sin log full.',bad:'DEADLOCK EVENT. LOG FULL. SEVERE con código de error.',
+   code:"grep -iE 'SEVERE|DEADLOCK|LOG FULL' \\\n  /db2/SID/db2dump/db2diag.log | tail -50",
+   interp:'<strong>Log full:</strong> todas las transacciones se suspenden. <strong>Deadlock:</strong> uno de los procesos fue rollback automático.',
+   next:'Log full: verificar espacio filesystem de logs, LOGPRIMARY/LOGSECOND. Deadlocks recurrentes: orden de acceso en ABAP.'},
+  {id:'c14',layer:'DB',crit:'m',sec:'C. Base de datos DB2',
+   name:'Bufferpool hit ratio y tablespaces',sub:'DB2 usa memoria eficientemente y hay espacio disponible',
+   txn:'db2 GET SNAPSHOT · TBSP_UTILIZATION',qrev:'Hit ratio bufferpools. % utilización tablespaces datos y temp.',
+   ok:'Hit ratio >90%. Tablespaces <80% utilizados.',bad:'Hit ratio <80%. Tablespace >90%.',
+   code:'db2 GET SNAPSHOT FOR BUFFERPOOLS ON DBNAME\n\ndb2 "SELECT TBSP_NAME,TBSP_UTILIZATION_PERCENT\n  FROM SYSIBMADM.TBSP_UTILIZATION\n  ORDER BY 2 DESC"',
+   interp:'Hit ratio bajo → datos no caben en RAM → reads físicos → correlaciona con wa alto en vmstat AIX.',
+   next:'Si bajo: aumentar bufferpool (ALTER BUFFERPOOL o reinicio). Si tablespace lleno: extender o archivar.'},
+  {id:'c15',layer:'DB',crit:'m',sec:'C. Base de datos DB2',
+   name:'RUNSTATS — Estadísticas de tablas e índices',sub:'El optimizador DB2 tiene estadísticas actualizadas',
+   txn:'DB02 → Tables · db2 RUNSTATS',qrev:'Fecha último RUNSTATS en tablas críticas SAP (BSEG, BKPF, VBAK, MSEG, PERNR).',
+   ok:'RUNSTATS hace <2 semanas en tablas activas.',bad:'RUNSTATS >4 semanas en tabla que creció >20%.',
+   interp:'Estadísticas viejas → optimizer elige full scan en lugar del índice. Causa frecuente de lentitud repentina sin cambio de código.',
+   next:'Ejecutar RUNSTATS sobre tablas afectadas. Resultado visible en minutos (nueva compilación del plan).'},
+  {id:'c16',layer:'AIX',crit:'h',sec:'D. Sistema operativo AIX',
+   name:'vmstat — CPU, memoria, paging',sub:'Radiografía del servidor: CPU, run queue, paging, swap',
+   txn:'vmstat 5 10',qrev:'r (run queue), id (idle %), wa (I/O wait), pi/po (paging), si/so (swap).',
+   ok:'r <nCPU. id >10%. wa <20%. pi/po=0. si/so=0.',bad:'r >nCPU. id=0 sostenido. po>0 (paging). so>0 (swap — crítico).',
+   code:'vmstat 5 10\n# r=runqueue  id=idle  wa=iowait\n# pi=pagein   po=pageout\n# si=swapin   so=swapout',
+   interp:'<strong>r alto, wa bajo:</strong> CPU saturada. <strong>wa alto, r bajo:</strong> cuello I/O. <strong>po>0:</strong> performance colapsará. <strong>so>0:</strong> emergencia total.',
+   next:'Si CPU: topas/ps. Si paging: svmon -G para ver quién consume RAM. Si I/O: iostat -Dl.'},
+  {id:'c17',layer:'AIX',crit:'h',sec:'D. Sistema operativo AIX',
+   name:'topas / ps — Proceso dominante en CPU',sub:'Identificar exactamente qué proceso consume los recursos',
+   txn:'topas · ps aux',qrev:'¿Es db2sysc (SQL pesada)? ¿Es dw.sapXXX (WP SAP)? ¿Proceso externo?',
+   ok:'Ningún proceso >50% CPU sostenido.',bad:'db2sysc o dw.sap >80% CPU continuo.',
+   code:'ps aux --sort=-pcpu | head -15\ntopas   # sección PROCESS',
+   interp:'<strong>db2sysc domina:</strong> SQL ineficiente → TOP_DYNAMIC_SQL. <strong>dw.sap domina:</strong> ABAP intensivo → SM50+SE30.',
+   next:'Tomar PID dominante → correlacionar con SM50 (columna PID) para identificar el programa ABAP.'},
+  {id:'c18',layer:'AIX',crit:'h',sec:'D. Sistema operativo AIX',
+   name:'iostat — Latencia de disco por LUN',sub:'Detectar si el storage está respondiendo lento',
+   txn:'iostat -Dl 5 10',qrev:'Service time (ms) por LUN, especialmente LUNs de datos y logs DB2.',
+   ok:'Service time <5ms SSD. <20ms HDD SAN.',bad:'>20ms sostenido. >50ms: storage degradado urgente.',
+   code:'iostat -Dl 5 10\n# columna "serv" = service time en ms\n# mapear LUN a filesystem de DB2',
+   interp:'I/O lento → bufferpool miss → SQL más lenta. En vmstat se ve como wa alto. Puede ser síntoma o causa.',
+   next:'Service time alto: escalar a infra/storage. I/O alto pero service time normal: bufferpool DB2 insuficiente.'},
+  {id:'c19',layer:'AIX',crit:'m',sec:'D. Sistema operativo AIX',
+   name:'netstat / ping — Latencia de red entre capas',sub:'Verificar latencia entre appserver y DB server',
+   txn:'netstat -s · ping · entstat',qrev:'Latencia ping appserver → DB. Retransmisiones TCP. Errores NIC.',
+   ok:'Latencia <1ms. Retransmisiones <0.01%. Sin errores.',bad:'Latencia >2ms. Retransmisiones >0.1%.',
+   code:'ping -c 100 <ip_db_server>  # avg debe ser <1ms\nnetstat -s | grep -i retrans\nentstat -d en0 | grep -i error',
+   interp:'Cada SQL implica round-trips. Con latencia alta, SQLs simples se acumulan multiplicadas por miles de ejecuciones.',
+   next:'Si latencia >2ms: escalar a redes. Si retransmisiones: revisar switch y NIC AIX.'},
+  {id:'c20',layer:'ABAP',crit:'h',sec:'E. ABAP y desarrollos custom',
+   name:'ST05 — SQL Trace sobre la transacción lenta',sub:'Qué SQLs genera la transacción y cuánto tarda cada una',
+   txn:'ST05',qrev:'SQLs por Duration. SELECT sin WHERE. SELECT en LOOP. Ratio fetched/returned.',
+   ok:'Todas las SQLs usan índice. Ratio <10. Sin SELECT * en tablas grandes.',bad:'SELECT * sin WHERE. SELECT en LOOP. Ratio >100:1. Duration >5s.',
+   interp:'<strong>SELECT en LOOP:</strong> N+1 queries → escalar a desarrollo. <strong>Full scan sin índice:</strong> falta índice o RUNSTATS DB2.',
+   next:'Si SQL es de programa Z → dev. Si es estándar → índice/RUNSTATS. Proporcionar el ST05 con SQL exacto.'},
+  {id:'c21',layer:'ABAP',crit:'m',sec:'E. ABAP y desarrollos custom',
+   name:'SE30 / SAT — ABAP Runtime Analysis',sub:'Cuando ST05 muestra SQLs rápidos pero el tiempo total es alto',
+   txn:'SE30 · SAT',qrev:'Módulos ABAP con mayor tiempo. Operaciones con internal tables. CPU vs DB time.',
+   ok:'Tiempo DB <60% del total. Sin módulos dominando >80%.',bad:'Un módulo consume >80% del tiempo ABAP. Operaciones masivas en internal tables.',
+   interp:'Si ABAP processing domina y SQLs son rápidas: el problema es algorítmico. No es DB2 ni infra.',
+   next:'Compartir SE30 con desarrolladores. El fix es refactorización de código, no tuning de infraestructura.'},
+  {id:'c22',layer:'SAP',crit:'h',sec:'F. Batch jobs',
+   name:'SM37 — Jobs batch activos y duración histórica',sub:'Si algún batch compite con online o tarda anormalmente',
+   txn:'SM37',qrev:'Jobs activos ahora. Comparar duración actual vs histórica. Jobs en horario de negocio.',
+   ok:'Jobs masivos en ventana nocturna. Duración dentro de ±20% del histórico.',bad:'Job 3× su tiempo normal. Múltiples jobs masivos en horario online.',
+   interp:'<strong>Job 3× lento:</strong> tabla creció, cambio de código o lock. <strong>Jobs en online:</strong> compiten por CPU, WPs BTC y DB2.',
+   next:'Para job lento: STAD + ST05. Para solapados: revisar Operation Mode en SM63.'},
+  {id:'c23',layer:'PO',crit:'h',sec:'G. Integración y SAP PO',
+   name:'SMQ1 / SMQ2 / SM58 — Colas y tRFCs pendientes',sub:'Acumulación de mensajes bloqueando o consumiendo recursos',
+   txn:'SMQ1 · SMQ2 · SM58',qrev:'Colas en SYSFAIL. tRFCs con CPICERR/SYSFAIL. Acumulación masiva.',
+   ok:'Colas procesadas fluidamente. SM58 sin SYSFAIL. Acumulación <100.',bad:'Cola en SYSFAIL. SM58 con cientos de SYSFAIL. Miles de entradas acumuladas.',
+   interp:'Cola qRFC en SYSFAIL detiene todos los mensajes siguientes (son secuenciales). SM58 acumulado: destino RFC no responde.',
+   next:'Para SMQ1 SYSFAIL: resolver error del mensaje bloqueante y reiniciar cola. Para SM58: verificar SM59.'},
+  {id:'c24',layer:'PO',crit:'h',sec:'G. Integración y SAP PO',
+   name:'WE02 / WE05 — IDocs acumulados o en error',sub:'IDocs sin procesar indican cuello en la integración',
+   txn:'WE02 · WE05',qrev:'IDocs en status 03, 51, 64/65. Volumen y antigüedad.',
+   ok:'IDocs procesados en minutos. Errores <1% del volumen.',bad:'Miles en 64/65: PO no consume. Muchos en 51: error masivo.',
+   interp:'Acumulación en 64/65: ECC genera IDocs pero PO no los lee → cuello en canal IDOC del adaptador PO.',
+   next:'Verificar canal IDOC en PO Admin (estado verde/rojo). Si PO OK pero no consume → JVM heap y threads.'},
+  {id:'c25',layer:'PO',crit:'h',sec:'G. Integración y SAP PO',
+   name:'PO Admin — Canales y JVM heap',sub:'Estado de canales de comunicación y salud de la JVM de SAP PO',
+   txn:'PO Administration Console · NWA',qrev:'Estado canales (verde/rojo). Mensajes WAIT/HOLD. JVM heap used % en NWA.',
+   ok:'Canales verdes. Heap <70%. Sin mensajes WAIT/HOLD.',bad:'Canal rojo o Error. Heap >85%. Muchos mensajes WAIT.',
+   interp:'<strong>Canal rojo:</strong> integración detenida. <strong>Heap >85%:</strong> GC frecuente → pausas en procesamiento (Full GC: segundos a minutos).',
+   next:'Canal rojo: revisar config y reiniciar. Heap alto: revisar Xmx JVM + default_trace.trc para GC pauses.'},
+  {id:'c28',layer:'SAP',crit:'h',sec:'G. Integración y SAP PO',
+   name:'SM59 — Destinos RFC: conectividad y rendimiento',sub:'Verificar que los destinos RFC estén activos y respondan en tiempo normal',
+   txn:'SM59 · SM59 → Test Connection · SM59 → Remote Logon',
+   qrev:'¿Hay destinos RFC en estado Error o con test de conexión fallido? ¿El tiempo de respuesta del test es alto? ¿Hay destinos con carga masiva de llamadas acumuladas?',
+   ok:'Test de conexión exitoso en todos los destinos críticos. Tiempo de respuesta del test <500ms. Sin errores de autorización ni de red.',
+   bad:'Test de conexión falla (CPIC error, timeout, host unreachable). Tiempo de respuesta >2s. Destino con carga acumulada visible en SM58.',
+   code:'* Desde SM59:\n  1. Seleccionar destino → Botón "Test Connection"\n     → Verificar: RC=0 y tiempo <500ms\n  2. Botón "Remote Logon"\n     → Confirma autenticación y que el sistema remoto responde\n\n* Correlacionar con SM58:\n  → Destinos que acumulan SYSFAIL en SM58\n    corresponden a destinos RFC degradados en SM59\n\n* En AIX — probar conectividad de red al host remoto:\n  ping -c 20 <hostname_destino_rfc>\n  telnet <hostname_destino_rfc> <puerto_saprouter_o_3200>',
+   interp:'<strong>CPIC error / Connection refused:</strong> el sistema destino (PO, otro ECC, sistema externo) no está disponible o el puerto está cerrado — problema de red o sistema caído. <strong>Timeout en test:</strong> el destino responde pero lento → puede saturar los WPs de tipo RFC en ECC y bloquear procesos online. <strong>Error de autorización (SY-SUBRC 1):</strong> usuario RFC sin permisos correctos o password expirado — revisar SM59 → Logon & Security. <strong>Destino con muchas llamadas en SM58:</strong> el destino está recibiendo más carga de la que puede procesar; cada llamada pendiente ocupa un WP en ECC.',
+   next:'Si conexión falla: verificar con ping/telnet desde AIX que el host y puerto son alcanzables. Si timeout: revisar carga del sistema destino. Si SYSFAIL en SM58 para ese destino: resolver el error del mensaje bloqueante y reintentar. Si usuario RFC expirado: resetear password en sistema destino y actualizar en SM59.'},
+  {id:'c29',layer:'SAP',crit:'h',sec:'G. Integración y SAP PO',
+   name:'SM59 — RFC Load Balancing y saturación de conexiones',sub:'Detectar si los WPs de tipo RFC están saturados por llamadas entrantes o salientes',
+   txn:'SM59 · SM50 (tipo RFC) · RZ12 · SMICM',
+   qrev:'¿Cuántos WPs de tipo RFC están en Running? ¿Hay destinos RFC configurados con connection pool agotado? ¿El tipo de WP RFC está saturado en SM50?',
+   ok:'WPs RFC en SM50 con mayoría en Wait. Pool de conexiones RFC <80% utilizado. Sin mensajes ICM_THREAD_LIMIT en SM21.',
+   bad:'Todos los WPs RFC en Running de forma sostenida. SM21 muestra ICM_THREAD_LIMIT o RFC_MAX_WP. Llamadas RFC en cola en SM58 por falta de WPs disponibles.',
+   code:'* Ver WPs tipo RFC en SM50:\n  → Filtrar columna Typ = RFC\n  → Si todos en Running: saturación de RFC WPs\n\n* Verificar parámetro de max WPs RFC:\n  RZ11 → rdisp/wp_no_rfc   (WPs dedicados a RFC)\n  RZ11 → rdisp/rfc_max_own (máx RFC por instancia)\n\n* Ver conexiones activas en ICM:\n  SMICM → Goto → Threads\n  → Columna "Active" vs "Max"\n\n* SM66 filtrado por tipo RFC:\n  → Identificar programa/función que más WPs RFC consume',
+   interp:'<strong>Todos WPs RFC ocupados:</strong> las llamadas RFC entrantes (desde PO, otros sistemas) no pueden ser atendidas → se encolan o generan timeout en el sistema llamante. <strong>ICM_THREAD_LIMIT:</strong> el servidor web/RFC del kernel alcanzó el máximo de hilos configurados — problema de parámetro, no de código. <strong>Un solo programa ocupa muchos WPs RFC:</strong> función RFC ineficiente o sin control de concurrencia → escalar a desarrollo para limitar paralelismo o agregar throttling.',
+   next:'Si WPs RFC saturados: aumentar rdisp/wp_no_rfc en RZ10 y reiniciar instancia. Evaluar si el sistema llamante tiene control de concurrencia (maxconn en RFC). Si un programa domina: SE37 para analizar la función RFC y optimizar. Revisar si la saturación coincide con ejecución de jobs batch que hacen llamadas RFC masivas.'},
+  {id:'c30',layer:'SAP',crit:'h',sec:'I. Monitoreo preventivo ERP PRD (Guión Compensar)',
+   name:'SMLG — Logon Groups y tiempos de respuesta por instancia',sub:'Verificar que los 6 servidores de aplicación estén activos y con tiempos normales',
+   txn:'SMLG → Load Distribution',
+   qrev:'¿Están los 6 servidores activos (VMPBLOMBERG, VMPCLINGEN, VMPCONSTANZA, VMPMAGDALA, VMPMELDORF, VMPVAREL)? ¿Los tiempos de respuesta están por debajo de 1000 ms?',
+   ok:'6 servidores activos con semáforo verde. Resp.time < 1000 ms en todos.',
+   bad:'Falta un servidor (solo 5 o menos). Tiempo de respuesta > 1000 ms en algún nodo.',
+   interp:'<strong>Servidor faltante:</strong> llamar al Basis disponible de Compensar de inmediato — un nodo caído redistribuye carga sobre los restantes → lentitud progresiva. <strong>Tiempo > 1000 ms:</strong> reportar al área BASIS; puede indicar saturación de WPs en ese nodo o problema de base de datos.',
+   next:'Si falta servidor: escalar a Kyndryl para revisión de infraestructura. Si tiempos altos: revisar SM50 en ese nodo específico y correlacionar con ST03N.'},
+  {id:'c31',layer:'SAP',crit:'h',sec:'I. Monitoreo preventivo ERP PRD (Guión Compensar)',
+   name:'SICK — SAP Initial Consistency Check',sub:'Verificar que no existen errores críticos del sistema SAP',
+   txn:'SICK',
+   qrev:'¿La pantalla muestra "no errors reported"? ¿Hay algún mensaje de error en color rojo?',
+   ok:'Pantalla muestra: "SAP System Check — no errors reported" en verde.',
+   bad:'Cualquier error reportado en esta transacción. Es una Txs crítica.',
+   interp:'Esta transacción revisa la consistencia global del sistema SAP. Cualquier error aquí es una señal de falla sistémica grave — puede afectar base de datos, perfil de instancia, repositorio ABAP o componentes del kernel.',
+   next:'Llamar al consultor BASIS de Compensar de inmediato para revisión y corrección antes de iniciar operación a las 6:00 AM. No esperar — es prioridad máxima.'},
+  {id:'c32',layer:'SAP',crit:'m',sec:'I. Monitoreo preventivo ERP PRD (Guión Compensar)',
+   name:'SMQ2 — Cola qRFC de entrada (inbound)',sub:'Verificar que no hay mensajes cancelados acumulados en la cola de entrada',
+   txn:'SMQ2',
+   qrev:'¿El contador de entradas y colas visualizadas está en 0? ¿Regresa a 0 después de actualizar varias veces en 5 minutos?',
+   ok:'Cantidad de entradas visualizadas = 0. Cantidad colas visualizadas = 0. Las colas pasan con buena velocidad.',
+   bad:'Valor > 0 que no regresa a 0 después de actualizar varias veces → mensajes cancelados acumulados.',
+   interp:'<strong>Colas detenidas por momentos:</strong> puede ser lentitud puntual del sistema — monitorear durante 5 min. <strong>Valor > 0 persistente:</strong> mensajes cancelados → reportar al área BASIS de inmediato. Los mensajes cancelados en SMQ2 bloquean el procesamiento de las integraciones entrantes hacia ECC.',
+   next:'Si hay mensajes cancelados: identificar la cola afectada, revisar el mensaje bloqueante y reportar a BASIS. Correlacionar con WE02 para verificar si hay IDocs también afectados.'},
+  {id:'c33',layer:'SAP',crit:'h',sec:'I. Monitoreo preventivo ERP PRD (Guión Compensar)',
+   name:'SM66 / SM50 — Procesos de trabajo activos por duración',sub:'Identificar procesos corriendo por encima de 1000 segundos en todos los nodos',
+   txn:'SM66 (global) · SM50 (por nodo)',
+   qrev:'Ordenar por Dur.trabajo. ¿Hay algún proceso activo corriendo por encima de 1000 segundos? ¿Hay sesiones disponibles en los 6 nodos de ERP Producción?',
+   ok:'Ningún proceso DIA activo por encima de 1000 segundos. WPs disponibles en todos los nodos.',
+   bad:'Proceso activo > 1000 segundos (reportar a Basis). Jobs críticos ZISHPMD0001 o ZFID0004 aparecen como cancelados.',
+   interp:'<strong>Proceso > 1000s:</strong> proceso posiblemente colgado o SQL muy lenta → reportar al Basis disponible. <strong>Jobs críticos cancelados</strong> (ZISHPMD0001 = Liberación tipos planificación ROBOT, ZFID0004 = Cierre diario cajas automáticas CS1000) → llamada inmediata al Basis. <strong>Sin sesiones disponibles:</strong> dispatcher saturado.',
+   code:'* En SM66: ordenar por columna Dur.trabajo → filtrar solo Activos\n* Jobs críticos a verificar en SM37:\n  ZISHPMD0001 — Liberación tipos planificación ROBOT\n  ZFID0004    — Cierre diario cajas automáticas CS 1000\n* En SM50 por nodo: verificar ocupación de todos\n  los procesos y que hayan sesiones disponibles',
+   next:'Si proceso > 1000s: tomar screenshot y escalar a Basis disponible. Si job crítico cancelado: llamar al Basis inmediatamente (no esperar al informe).'},
+  {id:'c34',layer:'PO',crit:'h',sec:'J. Monitoreo PO PRD — NWA y Message Monitor (Guión Compensar)',
+   name:'NWA — Performance Dashboard: ICM, Long Running, Memoria JVM',sub:'Verificar los indicadores clave de salud del servidor PO en el dashboard de NetWeaver Administrator',
+   txn:'NWA → http://172.27.48.55:50000/NWA o http://172.27.48.56:50000/NWA',
+   qrev:'¿Los Long Running superan 5? ¿El ICM está por encima de 1000 ms? ¿La memoria (Average) supera el 89%? ¿El GC (Effective Old Space Usage) supera el 65%?',
+   ok:'Long Running ≤ 5. ICM < 1000 ms. Memoria Average < 70%. GC (Old Space) < 65% en todos los nodos J2EE.',
+   bad:'Long Running > 5. ICM > 1000 ms. Memoria Max > 89%. GC > 65% en cualquier nodo → solicitar reinicio controlado a Kyndryl.',
+   interp:'<strong>Long Running > 5:</strong> procesos Java demorados que consumen threads y bloquean mensajes. <strong>ICM > 1000 ms:</strong> el servidor de comunicación está saturado — puede generar timeouts en todas las interfaces. <strong>GC > 65%:</strong> Threshold Warning de Compensar → solicitar a Kyndryl reinicio controlado de <strong>ambos nodos</strong> aunque solo uno esté alertado.',
+   code:'* URL NWA servidor 1: http://172.27.48.55:50000/NWA\n* URL NWA servidor 2: http://172.27.48.56:50000/NWA\n* En System Overview Dashboard revisar:\n  - ICM → Response Time\n  - Threads → Long Running\n  - Memory Utilization → Average y Max\n* En System Monitoring (SOLMAN 7.2):\n  URL: http://vmpcolonia.compensar.ccf:8003/sap/bc/ui2/flp\n  → Technical Administration → System and Application Monitoring\n  → System ID = POP → Instance Performance\n  → High Garbage Collection Activity\n  → Effective Old Space Usage\n  Thresholds: 65% Warning / 70% Critical',
+   next:'Si GC > 65%: solicitar a Kyndryl generación de caso para reinicio controlado de los dos nodos PO. Siempre reiniciar ambos nodos aunque solo uno esté alertado. Si ICM > 1000 ms: comunicar al Basis disponible de inmediato.'},
+  {id:'c35',layer:'PO',crit:'h',sec:'J. Monitoreo PO PRD — NWA y Message Monitor (Guión Compensar)',
+   name:'Message Monitor PO — Cancelaciones e interfaces con error',sub:'Revisar el top de cancelaciones y errores en las interfaces para detectar patrones de falla',
+   txn:'PO Admin → SOA → Monitoring → Message Monitor',
+   qrev:'Ordenar por "Terminated with error": ¿alguna interfaz supera el 3% de cancelaciones? Ordenar por "Error": ¿hay interfaces en rojo con encolamiento? ¿Algún mensaje tiene duración > 10 segundos?',
+   ok:'Cancelaciones < 3% por interfaz. Columna Error en 0 o en verde. Duración de mensajes < 10 seg.',
+   bad:'Cancelaciones > 3% en interfaz crítica. Interfaz en rojo en columna Error con encolamiento visible. Duración de mensajes > 10 seg → lentitud o afectación en la interfaz.',
+   interp:'<strong>Terminated with error alto:</strong> correlacionar con el incidente reportado — identificar la interfaz afectada y revisar el Message Log del error. <strong>Error con Scheduled en verde:</strong> hay reintentos programados — monitorear si se resuelven solos. <strong>Duración > 10s:</strong> umbral de Compensar para reportar lentitud. <strong>Llamar al Basis</strong> si cancelaciones > 20 y son por Timeout o comunicación.',
+   code:'* Acceso: SOA → Monitoring → Message Monitor\n* Time Range: seleccionar hora del incidente\n* Ordenar por "Terminated with error" (mayor a menor)\n  → Correlacionar interfaz con incidente reportado\n* Ordenar por "Error" para ver encolamiento\n* Para ver detalle: clic en número de transacciones\n  → Revisar Status Details y pestaña Message Log\n* Para rastrear respuesta de integración:\n  Copiar ID del response message → Identifiers → Add → Go\n  → Seleccionar fila → Open Message → Payload',
+   next:'Si cancelaciones > 20 por Timeout/comunicación: llamar al Basis disponible. Si todas las transacciones fallan en una interfaz crítica: evaluar bajar el canal con autorización de gerencia técnica. Para verificar servicio de consulta (no transaccional): usar SoapUI o Postman.'},
+  {id:'c36',layer:'PO',crit:'h',sec:'J. Monitoreo PO PRD — NWA y Message Monitor (Guión Compensar)',
+   name:'Umbrales de interfaces críticas Compensar — Hora pico vs hora valle',sub:'Comparar tiempos de respuesta actuales con los umbrales definidos por Compensar para cada interfaz',
+   txn:'PO Message Monitor → interfaces exitosas → columna Duration',
+   qrev:'¿Los tiempos de las interfaces exitosas están dentro del umbral hora pico o valle? ¿Alguna supera el umbral definido? ¿El porcentaje de cancelaciones supera el 3%?',
+   ok:'Tiempos dentro del umbral definido por interfaz. Cancelaciones < 3% en todas las interfaces.',
+   bad:'Tiempo fuera de umbral en interfaz crítica. Cancelaciones > 3% en cualquier interfaz de la tabla.',
+   interp:'Los umbrales de Compensar se calcularon con muestras de 500 peticiones/hora durante 1 semana. Superarlos indica degradación real del servicio. Las interfaces transaccionales (T) tienen mayor impacto que las de consulta (C).',
+   code:'INTERFACES CRÍTICAS — UMBRALES COMPENSAR:\n\nInterfaz                          Dir  Hora pico  Umbral(ms)  H.Valle  Umbral(ms)  % cancel\nAfiliadoConsultar_In (C)          Out  7:00-12:00  600        12-17:00  500        3%\nClientePersonaConsultar_In (C)    Out  7:00-12:00  650        12-17:00  400        3%\nAutorizaciones_In (T)             Out  7:00-12:00  3.500      12-17:00  2.500      3%\nAutorizacionesConsultarAfilREST   Out  7:00-12:00  400        12-17:00  300        3%\nAutorizacionesConsultarREST       Out  7:00-12:00  300        12-17:00  200        3%\nAutorizacionesAdministrarCita (T) Out  7:00-13:00  2.500      13-17:00  1.500      3%\nTopesPorMedicamentoConsultar (C)  Out  7:00-17:00  600        6:00-7:00 300        3%\nRedMedicosConsultar_In (C)        Out  7:00-12:00  2.000      12-17:00  1.500      3%\nConsultarFacturasCliente_In (C)   Out  6:00-11:00  1.500      11-17:00  1.000      3%\nNotificarPagoEcollect_In (T)      Out  8:00-17:00  3.000      6:00-8:00 2.500      3%\nGestionarOrdenLaboratorio (T)     Out  6:00-11:00  3.500      11-17:00  3.000      3%\nGestionarResultadoLaboratorio (T) In   13:00-17:00 2.500      6:00-13h  2.200      3%\nAgendaDisponible_In (C)           In   7:00-17:00  4.500      6:00-7:00 4.200      3%\nConsultasCitas_In (C)             In   6:00-15:00  3.000      15-17:00  2.500      3%',
+   next:'Si interfaz transaccional (T) supera umbral: reportar de inmediato al equipo de integraciones y al Basis. Si cancelaciones masivas en ConsultarAfiliado/ClientePersona: evaluar deshabilitar switch de integración (Caja o Salud) con autorización de gerencia SAP. Si cancelaciones masivas en Autorizaciones_In (SSAS): aplicar Paso_a_paso_restriccion_SSAS con autorización previa.'},
+  {id:'c37',layer:'PO',crit:'h',sec:'J. Monitoreo PO PRD — NWA y Message Monitor (Guión Compensar)',
+   name:'PI Communication Channel Monitoring — Estado de canales de comunicación',sub:'Verificar que todos los canales de comunicación PO están activos (Running) y sin errores de procesamiento',
+   txn:'PO Admin → SOA → Monitoring → PI Communication Channel Monitoring',
+   qrev:'¿Todos los canales tienen Status = Running? ¿Hay canales en estado Error o Stopped? ¿Processing Errors > 0 en algún canal?',
+   ok:'Todos los canales en estado Running. Processing Errors = 0. Control Data = Automatic.',
+   bad:'Canal en estado Error o Stopped. Processing Errors > 0. Canal en Manual control (no automático).',
+   interp:'<strong>Canal en Error/Stopped:</strong> la integración asociada está completamente detenida → todos los mensajes de esa interfaz acumularán error. <strong>Processing Errors > 0:</strong> mensajes que no pudieron ser procesados por el canal — puede deberse a timeout del sistema destino, certificado expirado o error de configuración. <strong>Canal en Manual:</strong> fue detenido manualmente en un incidente anterior y no fue reiniciado.',
+   code:'* Acceso: SOA → Monitoring → PI Communication Channel Monitoring\n* Buscar canal en campo "Find" → presionar Go\n* Botones disponibles: Start / Stop / Ping Channel\n* Para detener canal (solo con autorización gerencia técnica):\n  → Buscar nombre del canal → Stop\n  → Solo si impacto crítico con todas las transacciones fallidas\n* Para reiniciar canal detenido:\n  → Buscar canal → Start\n  → Verificar que pase a Running y Processing Errors = 0',
+   next:'Si canal detenido sin causa: presionar Start y monitorear. Si canal falla repetidamente: revisar logs del canal y escalar al arquitecto de integración. Bajar canal (Stop) solo con autorización expresa de gerencia técnica o gerente comunidad SAP. Notificar al equipo con: Endpoint, operaciones afectadas, fecha/hora, tramas y evidencias.'},
+  {id:'c26',layer:'SAP',crit:'m',sec:'H. Correlación y cierre',
+   name:'SE01 / STMS — Transportes recientes',sub:'Correlacionar inicio de lentitud con transportes importados',
+   txn:'SE01 · STMS',qrev:'¿Hubo transporte Workbench o Customizing en las últimas 24-48h?',
+   ok:'Sin transporte reciente correlacionado con el inicio.',bad:'Transporte importado pocas horas antes del síntoma.',
+   interp:'Transporte Workbench → nuevo código ABAP sospechoso. Customizing → configuración que afecta selecciones.',
+   next:'Identificar objetos del transporte. Si hay programas Z → ST05. Evaluar rollback si impacto es severo.'},
+  {id:'c27',layer:'SAP',crit:'m',sec:'H. Correlación y cierre',
+   name:'Línea de tiempo — correlacionar todos los hallazgos',sub:'Construir el timeline que conecta todos los eventos',
+   txn:'SM21 · ST03N · SM37 · db2diag · errpt AIX',qrev:'¿Cuándo empezó? ¿Qué ocurrió justo antes? ¿El problema aparece en DB2 antes que en SAP?',
+   ok:'N/A — paso de síntesis final.',bad:'Si DB2 muestra eventos antes que SAP → origen en DB2. Si AIX primero → infra.',
+   interp:'La secuencia de eventos es la clave. Job inicia → bloquea DB2 → SAP se degrada. O: transporte → SQL ineficiente → DB time sube.',
+   next:'Con hallazgos correlacionados: redactar diagnóstico final, causa raíz confirmada y acción correctiva.'},
+];
+
+// ========== STATE ==========
+const APP = {
+  user: 'BASIS Senior',
+  role: 'BASIS Senior',
+  system: 'SAP ECC EHP8 · PRD',
+  incident: { id:'', name:'', symptom:'', priority:'', layer:'', start:null, closedAt:null, status:'open', conclusion:'', rootCause:'', attachments:[] },
+  state: {},
+  activeLayer: 'all',
+  repStatus: 'En diagnóstico',
+  cases: [],
+  caseCounter: 0,
+  gistToken: '',
+  gistId: '',
+  gistSyncing: false,
+};
+CHECKS.forEach(c => APP.state[c.id] = { status:'p', note:'', assignee:'', open:false });
+
+function nextCaseId() {
+  APP.caseCounter = (APP.caseCounter || 0) + 1;
+  const y = new Date().getFullYear();
+  return 'CASO-' + y + '-' + String(APP.caseCounter).padStart(4,'0');
+}
+
+function resetCache() {
+  try { localStorage.removeItem('sapbasis_dx'); } catch(e){}
+  const gt = APP.gistToken, gi = APP.gistId;
+  CHECKS.forEach(c => APP.state[c.id] = {status:'p',note:'',assignee:'',open:false});
+  APP.incident = {id:'',name:'',symptom:'',priority:'',layer:'',start:null,closedAt:null,status:'open',conclusion:'',rootCause:'',attachments:[]};
+  APP.cases = [];
+  APP.caseCounter = 0;
+  APP.gistToken = gt;
+  APP.gistId = gi;
+  renderAll();
+  showToast('Datos locales limpiados — credenciales Gist conservadas','amber');
+}
+
+// ===== GIST SYNC =====
+function gistEnabled() { return !!(APP.gistToken && APP.gistId); }
+
+function setSyncStatus(status) {
+  const el = document.getElementById('sync-status');
+  const dot = document.getElementById('sync-dot');
+  if(!el) return;
+  const map = {
+    idle:    {txt:'Sincronizado',       col:'var(--green)',  dotcol:'var(--green)'},
+    saving:  {txt:'Guardando...',       col:'var(--amber)',  dotcol:'var(--amber)'},
+    loading: {txt:'Cargando...',        col:'var(--blue)',   dotcol:'var(--blue)'},
+    error:   {txt:'Error de sync',      col:'var(--red)',    dotcol:'var(--red)'},
+    offline: {txt:'Sin Gist — local',   col:'var(--text3)',  dotcol:'var(--text3)'},
+  };
+  const s = map[status] || map.offline;
+  el.textContent = s.txt;
+  el.style.color = s.col;
+  if(dot) dot.style.background = s.dotcol;
+}
+
+async function gistPush() {
+  if(!gistEnabled()) return;
+  setSyncStatus('saving');
+  const payload = {
+    cases: APP.cases,
+    caseCounter: APP.caseCounter,
+    incident: APP.incident,
+    state: APP.state,
+  };
+  // Strip base64 attachments from Gist (too large) — store filenames only
+  const lean = JSON.parse(JSON.stringify(payload));
+  lean.cases = lean.cases.map(c => ({
+    ...c,
+    attachments: (c.attachments||[]).map(a=>({name:a.name,type:a.type,size:a.size,uploaded:a.uploaded,data:'[stored_locally]'}))
+  }));
+  lean.incident = {...lean.incident, attachments:(lean.incident.attachments||[]).map(a=>({name:a.name,type:a.type,size:a.size,uploaded:a.uploaded,data:'[stored_locally]'}))};
+  try {
+    const res = await fetch(`https://api.github.com/gists/${APP.gistId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `token ${APP.gistToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { 'sapdx_data.json': { content: JSON.stringify(lean, null, 2) } } })
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    setSyncStatus('idle');
+  } catch(e) {
+    setSyncStatus('error');
+    showToast('Error al guardar en Gist: '+e.message,'red');
+  }
+}
+
+async function gistPull() {
+  if(!gistEnabled()) { setSyncStatus('offline'); return; }
+  setSyncStatus('loading');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${APP.gistId}`, {
+      headers: { Authorization: `token ${APP.gistToken}` }
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    const raw = data.files['sapdx_data.json']?.content;
+    if(!raw) { setSyncStatus('idle'); return; }
+    const remote = JSON.parse(raw);
+    if(remote.caseCounter !== undefined) {
+      // Merge: take max caseCounter, union cases by id (remote wins)
+      const localById = {};
+      (APP.cases||[]).forEach(c => localById[c.id]=c);
+      const remoteById = {};
+      (remote.cases||[]).forEach(c => remoteById[c.id]=c);
+      // Merge: for each case, if local has attachment data and remote has [stored_locally], keep local data
+      Object.keys(remoteById).forEach(id => {
+        const rem = remoteById[id];
+        const loc = localById[id];
+        if(loc) {
+          rem.attachments = (rem.attachments||[]).map((a,i) => {
+            if(a.data==='[stored_locally]' && loc.attachments && loc.attachments[i]) return loc.attachments[i];
+            return a;
+          });
+        }
+        localById[id] = rem;
+      });
+      APP.cases = Object.values(localById).sort((a,b)=>b.id.localeCompare(a.id));
+      APP.caseCounter = Math.max(APP.caseCounter||0, remote.caseCounter||0);
+      if(remote.state) {
+        Object.assign(APP.state, remote.state);
+        CHECKS.forEach(c => { if(!APP.state[c.id]) APP.state[c.id]={status:'p',note:'',assignee:'',open:false}; });
+      }
+      // Only update active incident from remote if we don't have one locally
+      if(remote.incident && remote.incident.id && !APP.incident.id) {
+        APP.incident = remote.incident;
+      }
+      save();
+      renderAll();
+    }
+    setSyncStatus('idle');
+    showToast('Datos sincronizados desde Gist','green');
+  } catch(e) {
+    setSyncStatus('error');
+    showToast('Error al leer Gist: '+e.message,'red');
+  }
+}
+
+function save() {
+  try { localStorage.setItem('sapbasis_dx', JSON.stringify(APP)); } catch(e){}
+  // Debounced Gist push
+  if(gistEnabled()) {
+    clearTimeout(save._t);
+    save._t = setTimeout(()=>gistPush(), 1500);
+  }
+}
+
+function load() {
+  try {
+    const d = localStorage.getItem('sapbasis_dx');
+    if(d) {
+      const p = JSON.parse(d);
+      Object.assign(APP, p);
+      if(!APP.cases) APP.cases = [];
+      if(!APP.caseCounter) APP.caseCounter = 0;
+      if(!APP.gistToken) APP.gistToken = '';
+      if(!APP.gistId) APP.gistId = '';
+      if(!APP.incident.attachments) APP.incident.attachments = [];
+      CHECKS.forEach(c => {
+        if(!APP.state[c.id]) APP.state[c.id] = {status:'p',note:'',assignee:'',open:false};
+      });
+    }
+  } catch(e){}
+}
+
+// ========== FILE HANDLING ==========
+let pendingFiles = [];
+function dzOver(e){ e.preventDefault(); document.getElementById('drop-zone').style.borderColor='var(--blue)'; }
+function dzLeave(e){ document.getElementById('drop-zone').style.borderColor='var(--border2)'; }
+function dzDrop(e){ e.preventDefault(); dzLeave(e); handleFiles(e.dataTransfer.files); }
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if(f.size > 2*1024*1024){ showToast('Archivo muy grande (máx 2MB): '+f.name,'red'); return; }
+    const r = new FileReader();
+    r.onload = ev => {
+      const att = { name:f.name, type:f.type, size:f.size, data:ev.target.result, uploaded: new Date().toISOString() };
+      pendingFiles.push(att);
+      renderPendingFiles();
+    };
+    r.readAsDataURL(f);
+  });
+}
+function renderPendingFiles() {
+  const el = document.getElementById('f-file-list');
+  if(!el) return;
+  el.innerHTML = pendingFiles.map((f,i) => `
+    <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:4px 8px;font-size:11px;color:var(--text2)">
+      <span>${fileIcon(f.type)}</span>
+      <span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+      <span style="color:var(--text3)">${(f.size/1024).toFixed(0)}kb</span>
+      <button onclick="removePending(${i})" style="color:var(--red);font-size:13px;line-height:1;background:none;border:none;cursor:pointer">×</button>
+    </div>`).join('');
+}
+function removePending(i){ pendingFiles.splice(i,1); renderPendingFiles(); }
+function fileIcon(type){ return type.includes('image')?'🖼':'📄'; }
+
+// ========== LOGIN ==========
+function manualSync() {
+  if(!gistEnabled()) {
+    showToast('Configura el Token y Gist ID para sincronizar','amber');
+    return;
+  }
+  if(APP.incident.id) snapshotCurrentCase();
+  showToast('Sincronizando con GitHub Gist...','blue');
+  gistPull();
+}
+
+function toggleGistHelp() {
+  const el = document.getElementById('gist-help-box');
+  el.style.display = el.style.display==='none'?'block':'none';
+}
+
+function doLogin() {
+  const n = document.getElementById('login-name').value.trim();
+  const r = document.getElementById('login-role').value;
+  const s = document.getElementById('login-system').value;
+  const gt = (document.getElementById('login-gist-token').value||'').trim();
+  const gi = (document.getElementById('login-gist-id').value||'').trim();
+  if(!n) { showToast('Ingresa tu nombre de usuario','red'); return; }
+  // Load local state first
+  load();
+  // Apply login values (override loaded ones)
+  APP.user = n;
+  APP.role = r;
+  APP.system = s;
+  if(gt) APP.gistToken = gt;
+  if(gi) APP.gistId = gi;
+  // Pre-fill token/id fields from saved values
+  const tField = document.getElementById('login-gist-token');
+  const iField = document.getElementById('login-gist-id');
+  if(tField && APP.gistToken && !gt) tField.value = APP.gistToken;
+  if(iField && APP.gistId && !gi) iField.value = APP.gistId;
+
+  const initials = n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'BS';
+  document.getElementById('tb-avatar').textContent = initials;
+  document.getElementById('tb-username').textContent = n;
+  document.getElementById('my-avatar-team').textContent = initials;
+  document.getElementById('my-name-team').textContent = n;
+  document.getElementById('dash-system-label').textContent = s + ' · IBM DB2 · AIX';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  save();
+  renderAll();
+  if(gistEnabled()) {
+    showToast('Bienvenido, ' + n + ' · Sincronizando con Gist...', 'green');
+    gistPull();
+  } else {
+    showToast('Bienvenido, ' + n + ' · Modo local', 'green');
+    setSyncStatus('offline');
+  }
+}
+
+// ========== NAVIGATION ==========
+function goView(v, btn) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.querySelectorAll('.tb-nav-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else {
+    document.querySelectorAll('.tb-nav-btn').forEach(b => {
+      if(b.textContent.toLowerCase().includes(
+        v==='dashboard'?'dash':v==='checklist'?'diagnós':v==='history'?'casos':v==='report'?'reporte':'equipo'
+      )) b.classList.add('active');
+    });
+  }
+  if(v==='checklist') renderChecklist();
+  if(v==='report') renderReport();
+  if(v==='dashboard') updateDashboard();
+  if(v==='history') renderHistory();
+}
+
+function setNavActive(el) {
+  document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ========== CHECKLIST ==========
+function setLayer(el) {
+  const l = el.dataset.layer;
+  APP.activeLayer = l;
+  document.querySelectorAll('.filter-pills .pill').forEach(p => {
+    p.className = 'pill';
+    if(p.dataset.layer === l) p.classList.add('active-' + l);
+  });
+  renderChecklist();
+}
+
+function renderChecklist() {
+  const wrap = document.getElementById('cl-list');
+  wrap.innerHTML = '';
+  const title = document.getElementById('cl-inc-title');
+  title.textContent = APP.incident.id ? APP.incident.id + ' — ' + APP.incident.name : 'Abre un caso para comenzar el diagnóstico';
+  const sections = [...new Set(CHECKS.map(c=>c.sec))];
+  sections.forEach(sec => {
+    const items = CHECKS.filter(c => c.sec===sec && shouldShow(c));
+    if(!items.length) return;
+    const sl = document.createElement('div');
+    sl.className = 'chk-section-label';
+    sl.textContent = sec;
+    wrap.appendChild(sl);
+    items.forEach(c => wrap.appendChild(buildItem(c)));
+  });
+  updateStats();
+  updateLayerGrid();
+}
+
+function shouldShow(c) {
+  const s = APP.state[c.id];
+  if(APP.activeLayer === 'all') return true;
+  if(APP.activeLayer === 'flag') return s.status === 'flag';
+  return c.layer === APP.activeLayer;
+}
+
+function buildItem(c) {
+  const s = APP.state[c.id];
+  const ltag = {SAP:'tag-sap',DB:'tag-db',AIX:'tag-aix',PO:'tag-po',ABAP:'tag-abap'}[c.layer]||'tag-sap';
+  const cbCls = {ok:'ok',flag:'flag',skip:'skip',p:''}[s.status]||'';
+  const cbIcon = s.status==='ok'
+    ? '<svg width="10" height="10" viewBox="0 0 12 10" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,5 4,9 11,1"/></svg>'
+    : s.status==='flag'
+    ? '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="2" x2="6" y2="7"/><circle cx="6" cy="10" r="1.2" fill="white"/></svg>'
+    : s.status==='skip'
+    ? '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="2" y1="6" x2="10" y2="6"/></svg>'
+    : '';
+  const statusBadge = s.status==='ok'
+    ? '<span style="font-size:10px;padding:1px 7px;border-radius:8px;background:#05411e33;color:#34d399">OK</span>'
+    : s.status==='flag'
+    ? '<span style="font-size:10px;padding:1px 7px;border-radius:8px;background:#50100033;color:#f87171">Hallazgo</span>'
+    : s.status==='skip'
+    ? '<span style="font-size:10px;padding:1px 7px;border-radius:8px;background:#22222233;color:#888">Omitido</span>'
+    : '';
+  const critCls = {h:'crit-h',m:'crit-m',l:'crit-l'}[c.crit]||'crit-m';
+  const critLabel = {h:'Alta',m:'Media',l:'Baja'}[c.crit];
+  const isOpen = s.open || false;
+  const div = document.createElement('div');
+  div.className = `chk-item${s.status!=='p'?' status-'+s.status:''}${isOpen?' open':''}`;
+  div.id = 'ci-'+c.id;
+  div.innerHTML = `
+<div class="chk-head" onclick="toggleItem('${c.id}')">
+  <div class="chk-cb ${cbCls}" onclick="event.stopPropagation();cycleStatus('${c.id}')">${cbIcon}</div>
+  <div class="chk-info">
+    <div class="chk-name">${c.name} <span class="tag ${ltag}">${c.layer}</span>${statusBadge}</div>
+    <div class="chk-sub">${c.sub} &nbsp;<span style="font-size:10px;color:var(--text3)">· Criticidad: ${critLabel}</span></div>
+  </div>
+  <div class="crit-pip ${critCls}"></div>
+  <div class="chk-chevron">▶</div>
+</div>
+<div class="chk-body">
+  <div class="chk-body-inner">
+    <div class="detail-grid">
+      <div class="dc"><div class="dc-label">Transacción / Comando</div><div class="dc-text">${c.txn}</div></div>
+      <div class="dc"><div class="dc-label">Qué revisar exactamente</div><div class="dc-text">${c.qrev}</div></div>
+      <div class="dc normal"><div class="dc-label">Valor normal</div><div class="dc-text">${c.ok}</div></div>
+      <div class="dc alert"><div class="dc-label">Valor de alerta</div><div class="dc-text">${c.bad}</div></div>
+    </div>
+    <div class="dc" style="margin-top:8px"><div class="dc-label">Cómo interpretar</div><div class="dc-text">${c.interp}</div></div>
+    ${c.code ? `<div class="code-block">${c.code}</div>` : ''}
+    <div class="dc" style="margin-top:8px"><div class="dc-label">Qué hacer después</div><div class="dc-text">${c.next}</div></div>
+    <div class="verdict-row">
+      <button class="verdict-btn ok"   onclick="setStatus('${c.id}','ok')">Verificado — sin hallazgo</button>
+      <button class="verdict-btn flag" onclick="setStatus('${c.id}','flag')">Hallazgo encontrado</button>
+      <button class="verdict-btn"      onclick="setStatus('${c.id}','skip')">No aplica / omitir</button>
+    </div>
+    <textarea class="note-area" placeholder="Notas del hallazgo, evidencia capturada, timestamps..." oninput="saveNote('${c.id}',this.value)">${s.note||''}</textarea>
+    <div class="assigned-row">
+      <span>Asignado a:</span>
+      <select style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;color:var(--text2);font-size:11px;outline:none" onchange="setAssignee('${c.id}',this.value)">
+        <option value="">Sin asignar</option>
+        <option value="${APP.user}" ${s.assignee===APP.user?'selected':''}>${APP.user}</option>
+        <option value="M. Vargas" ${s.assignee==='M. Vargas'?'selected':''}>M. Vargas (DBA DB2)</option>
+        <option value="J. Ramírez" ${s.assignee==='J. Ramírez'?'selected':''}>J. Ramírez (AIX)</option>
+      </select>
+      ${s.assignee ? `<div class="assigned-avatar" style="background:var(--blue2)">${s.assignee.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>` : ''}
+    </div>
+  </div>
+</div>`;
+  return div;
+}
+
+function toggleItem(id) {
+  APP.state[id].open = !APP.state[id].open;
+  const el = document.getElementById('ci-'+id);
+  if(el) el.classList.toggle('open', APP.state[id].open);
+}
+function cycleStatus(id) {
+  const cycle = {p:'ok',ok:'flag',flag:'skip',skip:'p'};
+  APP.state[id].status = cycle[APP.state[id].status];
+  reRenderItem(id);
+  updateStats(); updateDashboard(); save();
+}
+function setStatus(id, st) {
+  APP.state[id].status = st;
+  addFeedActivity(id, st);
+  reRenderItem(id);
+  updateStats(); updateDashboard(); save();
+}
+function saveNote(id, v) { APP.state[id].note = v; save(); }
+function setAssignee(id, v) { APP.state[id].assignee = v; save(); }
+
+function reRenderItem(id) {
+  const c = CHECKS.find(x=>x.id===id);
+  const el = document.getElementById('ci-'+id);
+  if(!el || !c) return;
+  const fresh = buildItem(c);
+  el.replaceWith(fresh);
+}
+
+function addFeedActivity(id, st) {
+  const c = CHECKS.find(x=>x.id===id);
+  const feed = document.getElementById('activity-feed');
+  if(!feed||!c) return;
+  const row = document.createElement('div');
+  row.className = 'act-item';
+  const verb = st==='ok'?'verificado ✓':st==='flag'?'<strong style="color:var(--red)">HALLAZGO</strong>':'omitido';
+  row.innerHTML = `<div class="act-time">ahora</div><div class="act-text"><strong>${c.txn.split('·')[0].trim()}</strong> — ${verb}</div>`;
+  feed.insertBefore(row, feed.firstChild);
+  if(feed.children.length > 8) feed.removeChild(feed.lastChild);
+}
+
+function updateStats() {
+  const total = CHECKS.length;
+  const ok    = CHECKS.filter(c=>APP.state[c.id].status==='ok').length;
+  const flag  = CHECKS.filter(c=>APP.state[c.id].status==='flag').length;
+  const skip  = CHECKS.filter(c=>APP.state[c.id].status==='skip').length;
+  const done  = ok+flag+skip;
+  const pct   = Math.round(done/total*100);
+  const el = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  const pf = document.getElementById('cl-prog'); if(pf) pf.style.width=pct+'%';
+  el('stat-ok',   ok+' verificados');
+  el('stat-flag', flag+' hallazgos');
+  el('stat-skip', skip+' omitidos');
+  el('stat-pct',  pct+'% completado');
+  el('nb-flags', flag);
+  const nb = document.getElementById('nb-flags');
+  if(nb) nb.className = 'nav-badge' + (flag>0?' alert':'');
+}
+
+function updateDashboard() {
+  const total = CHECKS.length;
+  const ok    = CHECKS.filter(c=>APP.state[c.id].status==='ok').length;
+  const flag  = CHECKS.filter(c=>APP.state[c.id].status==='flag').length;
+  const done  = CHECKS.filter(c=>APP.state[c.id].status!=='p').length;
+  const pct   = Math.round(done/total*100);
+  const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('kpi-pct', pct+'%');
+  set('kpi-pct-sub', done+' de '+total+' pasos');
+  set('kpi-flags', flag);
+  set('kpi-ok', ok);
+  const inc = APP.incident;
+  set('kpi-inc', inc.id || 'Sin caso activo');
+  set('kpi-inc-sub', inc.name || 'Abre un nuevo caso para comenzar');
+  // update first incident row in dashboard
+  const da = document.getElementById('dash-active-inc-name');
+  if(da) da.textContent = inc.id ? inc.id+' — '+inc.name : 'Sin caso activo';
+  const dm = document.getElementById('dash-active-inc-meta');
+  if(dm) dm.textContent = inc.start ? 'Abierto · '+new Date(inc.start).toLocaleString('es-CO') : 'Sin iniciar';
+  const dp = document.getElementById('dash-active-pct');
+  if(dp) dp.textContent = pct+'%';
+  const nb = document.getElementById('nb-hist');
+  if(nb) nb.textContent = APP.cases.length;
+  updateLayerGrid();
+}
+
+function updateLayerGrid() {
+  const grid = document.getElementById('layer-status-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const layers = ['SAP','DB','AIX','PO','ABAP'];
+  const labels = {SAP:'SAP BASIS',DB:'DB2',AIX:'AIX',PO:'PO / Integración',ABAP:'ABAP'};
+  layers.forEach(l => {
+    const items = CHECKS.filter(c=>c.layer===l);
+    const flags = items.filter(c=>APP.state[c.id].status==='flag').length;
+    const done  = items.filter(c=>APP.state[c.id].status!=='p').length;
+    const pct   = Math.round(done/items.length*100);
+    const col   = flags>0?'var(--red)':done===items.length?'var(--green)':'var(--amber)';
+    const card  = document.createElement('div');
+    card.className = 'layer-card';
+    card.innerHTML = `<div class="layer-name">${labels[l]}</div>
+<div class="layer-count" style="color:${col}">${flags}</div>
+<div class="layer-sub">${flags} hallazgo${flags!==1?'s':''} · ${pct}% revisado</div>
+<div class="layer-bar"><div class="layer-fill" style="width:${pct}%;background:${col}"></div></div>`;
+    card.onclick = () => { setLayerDirect(l); goView('checklist',null); };
+    grid.appendChild(card);
+  });
+}
+
+function setLayerDirect(l) {
+  APP.activeLayer = l;
+  document.querySelectorAll('.filter-pills .pill').forEach(p => {
+    p.className='pill';
+    if(p.dataset.layer===l) p.classList.add('active-'+l);
+  });
+}
+
+// ========== CASE MANAGEMENT ==========
+function openModal(id) {
+  if(id==='new-incident') {
+    pendingFiles = [];
+    const el = document.getElementById('f-file-list'); if(el) el.innerHTML='';
+    const fn = document.getElementById('f-name'); if(fn) fn.value='';
+    const fs = document.getElementById('f-symptom'); if(fs) fs.value='';
+    const fe = document.getElementById('f-error-msg'); if(fe) fe.value='';
+    const lbl = document.getElementById('f-case-id-label');
+    const next = (APP.caseCounter||0)+1;
+    const y = new Date().getFullYear();
+    if(lbl) lbl.textContent = 'Caso: CASO-'+y+'-'+String(next).padStart(4,'0');
+  }
+  document.getElementById('modal-'+id).classList.remove('hidden');
+}
+function closeModal(id) { document.getElementById('modal-'+id).classList.add('hidden'); }
+
+function createIncident() {
+  const n = document.getElementById('f-name').value.trim();
+  if(!n) { showToast('Ingresa un título para el caso','red'); return; }
+  const sym  = document.getElementById('f-symptom').value.trim();
+  const pri  = document.getElementById('f-priority').value;
+  const lay  = document.getElementById('f-layers').value;
+  const errm = document.getElementById('f-error-msg').value.trim();
+  const cid  = nextCaseId();
+  const now  = new Date().toISOString();
+  // Save current case state back to cases array if there's an active one
+  if(APP.incident.id) snapshotCurrentCase();
+  // Reset checklist state
+  CHECKS.forEach(c => APP.state[c.id] = {status:'p',note:'',assignee:'',open:false});
+  APP.incident = {
+    id:cid, name:n, symptom:sym, priority:pri, layer:lay,
+    errorMsg:errm, start:now, closedAt:null, status:'open',
+    conclusion:'', rootCause:'', attachments:[...pendingFiles],
+    analyst: APP.user, role: APP.role,
+    checkState: {}
+  };
+  pendingFiles = [];
+  closeModal('new-incident');
+  renderAll();
+  showToast('Caso '+cid+' abierto', 'green');
+  addFeedActivity_case(cid, 'abierto');
+  goView('checklist', null);
+  save();
+}
+
+function snapshotCurrentCase() {
+  // Save checklist state into current incident
+  APP.incident.checkState = JSON.parse(JSON.stringify(APP.state));
+  APP.incident.closedAt = APP.incident.closedAt || null;
+  // Add/update in cases array
+  const idx = APP.cases.findIndex(c=>c.id===APP.incident.id);
+  const snap = JSON.parse(JSON.stringify(APP.incident));
+  // Compute summary
+  snap.totalChecks = CHECKS.length;
+  snap.okCount = CHECKS.filter(c=>APP.state[c.id].status==='ok').length;
+  snap.flagCount = CHECKS.filter(c=>APP.state[c.id].status==='flag').length;
+  snap.pct = Math.round((snap.okCount+snap.flagCount+CHECKS.filter(c=>APP.state[c.id].status==='skip').length)/CHECKS.length*100);
+  snap.findings = CHECKS.filter(c=>APP.state[c.id].status==='flag').map(c=>({id:c.id,name:c.name,txn:c.txn,note:APP.state[c.id].note}));
+  if(idx>=0) APP.cases[idx] = snap;
+  else APP.cases.unshift(snap);
+}
+
+function closeCase(cid) {
+  const idx = APP.cases.findIndex(c=>c.id===cid);
+  const src = idx>=0 ? APP.cases[idx] : null;
+  // If it's the active case, snapshot first
+  if(APP.incident.id===cid) {
+    snapshotCurrentCase();
+    APP.incident.status='closed';
+    APP.incident.closedAt=new Date().toISOString();
+    // Update in cases
+    const idx2=APP.cases.findIndex(c=>c.id===cid);
+    if(idx2>=0){ APP.cases[idx2].status='closed'; APP.cases[idx2].closedAt=APP.incident.closedAt; }
+  } else if(src) {
+    src.status='closed'; src.closedAt=new Date().toISOString();
+  }
+  showToast('Caso '+cid+' cerrado','green');
+  renderHistory();
+  updateDashboard();
+  save();
+}
+
+function addFeedActivity_case(cid, action) {
+  const feed = document.getElementById('activity-feed');
+  if(!feed) return;
+  const row = document.createElement('div');
+  row.className='act-item';
+  row.innerHTML=`<div class="act-time">ahora</div><div class="act-text"><strong>${cid}</strong> — ${action}</div>`;
+  feed.insertBefore(row,feed.firstChild);
+  if(feed.children.length>8) feed.removeChild(feed.lastChild);
+}
+
+// ========== HISTORY ==========
+function fmtDate(iso) {
+  if(!iso) return '—';
+  return new Date(iso).toLocaleString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function timeAgo(iso) {
+  if(!iso) return '';
+  const diff = Date.now()-new Date(iso).getTime();
+  const m=Math.floor(diff/60000), h=Math.floor(m/60), d=Math.floor(h/24);
+  if(d>0) return 'hace '+d+' día'+(d>1?'s':'');
+  if(h>0) return 'hace '+h+'h';
+  if(m>0) return 'hace '+m+'min';
+  return 'ahora';
+}
+
+function renderHistory() {
+  // Snapshot current active case before rendering
+  if(APP.incident.id) snapshotCurrentCase();
+
+  const search = (document.getElementById('hist-search')||{}).value||'';
+  const filter = (document.getElementById('hist-filter')||{}).value||'';
+  const list = document.getElementById('history-list');
+  if(!list) return;
+
+  // Stats row
+  const statsEl = document.getElementById('hist-stats-row');
+  if(statsEl) {
+    const total = APP.cases.length;
+    const open = APP.cases.filter(c=>c.status==='open').length;
+    const closed = APP.cases.filter(c=>c.status==='closed').length;
+    const p1 = APP.cases.filter(c=>c.priority==='P1').length;
+    const priColors = {P1:'var(--red)',P2:'var(--amber)',P3:'var(--blue)',P4:'var(--green)'};
+    statsEl.innerHTML = [
+      ['TOTAL CASOS', total, 'var(--blue)'],
+      ['ABIERTOS', open, 'var(--amber)'],
+      ['CERRADOS', closed, 'var(--green)'],
+      ['CRÍTICOS (P1)', p1, 'var(--red)']
+    ].map(([l,v,col])=>`
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">${l}</div>
+        <div style="font-size:22px;font-weight:600;color:${col}">${v}</div>
+      </div>`).join('');
+  }
+
+  // Filter cases
+  let cases = [...APP.cases];
+  if(search) {
+    const q = search.toLowerCase();
+    cases = cases.filter(c => c.id.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || (c.symptom||'').toLowerCase().includes(q));
+  }
+  if(filter==='open') cases=cases.filter(c=>c.status==='open');
+  else if(filter==='closed') cases=cases.filter(c=>c.status==='closed');
+  else if(filter) cases=cases.filter(c=>c.priority===filter);
+
+  if(!cases.length) {
+    list.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px">
+      ${APP.cases.length===0 ? 'Aún no hay casos registrados. Abre tu primer caso con el botón <strong style="color:var(--text2)">+ INCIDENTE</strong>.' : 'Sin resultados para la búsqueda actual.'}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = cases.map(c => {
+    const isOpen = c.status==='open';
+    const isActive = c.id === APP.incident.id;
+    const priColors = {P1:'var(--red)',P2:'var(--amber)',P3:'var(--blue)',P4:'var(--green)'};
+    const priCol = priColors[c.priority]||'var(--text3)';
+    const duration = (c.start && c.closedAt) ? (() => {
+      const ms = new Date(c.closedAt)-new Date(c.start);
+      const m=Math.floor(ms/60000), h=Math.floor(m/60);
+      return h>0 ? h+'h '+( m%60)+'min' : m+'min';
+    })() : (c.start ? timeAgo(c.start)+' · en curso' : '—');
+    const flagList = (c.findings||[]).slice(0,3).map(f=>`<span class="htag red" style="font-size:10px">${f.txn?f.txn.split('·')[0].trim():f.name}</span>`).join('');
+    const hasMore = (c.findings||[]).length>3;
+    const attCount = (c.attachments||[]).length;
+    return `<div class="hist-card" style="${isActive?'border:1px solid var(--blue)44;':''}" onclick="openCaseDetail('${c.id}')">
+      <div class="hist-header" style="align-items:flex-start">
+        <div class="hist-icon ${isOpen?'open':'done'}" style="background:${isOpen?'var(--reddim)':'var(--greendim)'};color:${isOpen?'var(--red)':'var(--green)'}">${isOpen?'!':'✓'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--blue)">${c.id}</span>
+            <span style="font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:${priCol}22;color:${priCol}">${c.priority||'P3'}</span>
+            ${isActive?'<span style="font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bluedim);color:var(--blue)">ACTIVO</span>':''}
+          </div>
+          <div class="hist-name">${c.name}</div>
+          <div class="hist-meta">${fmtDate(c.start)} · ${duration} · ${c.analyst||'—'} · ${Math.round(c.pct||0)}% checklist</div>
+        </div>
+      </div>
+      <div class="hist-tags" style="margin-top:8px">
+        ${isOpen?'<span class="htag red">Abierto</span>':'<span class="htag green">Cerrado</span>'}
+        ${c.layer?`<span class="htag">${c.layer}</span>`:''}
+        ${attCount>0?`<span class="htag blue">${attCount} adjunto${attCount>1?'s':''}</span>`:''}
+        ${(c.findings||[]).length>0?`<span class="htag" style="color:var(--red)">${(c.findings||[]).length} hallazgo${(c.findings||[]).length>1?'s':''}</span>`:''}
+      </div>
+      ${(c.findings||[]).length>0?`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">${flagList}${hasMore?`<span class="htag" style="color:var(--text3)">+${(c.findings||[]).length-3} más</span>`:''}</div>`:''}
+      ${c.rootCause?`<div class="hist-root"><div class="hist-root-label">Causa raíz</div><div class="hist-root-text">${c.rootCause}</div></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+let _detailCaseId = null;
+function openCaseDetail(cid) {
+  if(APP.incident.id===cid) snapshotCurrentCase();
+  const c = APP.cases.find(x=>x.id===cid);
+  if(!c) return;
+  _detailCaseId = cid;
+  const priColors = {P1:'var(--reddim)',P2:'var(--amberdim)',P3:'var(--bluedim)',P4:'var(--greendim)'};
+  const priText  = {P1:'#f87171',P2:'#fbbf24',P3:'#60a5fa',P4:'#34d399'};
+  document.getElementById('md-id').textContent = c.id;
+  document.getElementById('md-title').textContent = c.name;
+  document.getElementById('md-priority').textContent = c.priority||'P3';
+  document.getElementById('md-priority').style.background = priColors[c.priority]||'var(--bluedim)';
+  document.getElementById('md-priority').style.color = priText[c.priority]||'#60a5fa';
+  const sb = document.getElementById('md-status-badge');
+  sb.textContent = c.status==='open'?'ABIERTO':'CERRADO';
+  sb.style.background = c.status==='open'?'var(--reddim)':'var(--greendim)';
+  sb.style.color = c.status==='open'?'var(--red)':'var(--green)';
+  document.getElementById('md-meta').textContent = fmtDate(c.start) + (c.closedAt?' · Cerrado: '+fmtDate(c.closedAt):'') + ' · '+c.analyst;
+  document.getElementById('md-symptom').textContent = c.symptom||'Sin descripción';
+  const eb = document.getElementById('md-error-block');
+  const ep = document.getElementById('md-error');
+  if(c.errorMsg){ eb.style.display='block'; ep.textContent=c.errorMsg; } else eb.style.display='none';
+  const ab = document.getElementById('md-attachments-block');
+  const al = document.getElementById('md-attachments-list');
+  if((c.attachments||[]).length){
+    ab.style.display='block';
+    al.innerHTML=(c.attachments||[]).map(a=>{
+      const isImg = a.type&&a.type.includes('image');
+      return `<div style="display:flex;flex-direction:column;gap:4px;align-items:center;cursor:pointer" onclick="previewAttachment('${a.name}','${a.data}','${a.type}')">
+        ${isImg?`<img src="${a.data}" style="width:60px;height:60px;object-fit:cover;border-radius:5px;border:1px solid var(--border2)">`
+               :`<div style="width:60px;height:60px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:20px">📄</div>`}
+        <span style="font-size:10px;color:var(--text3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}</span>
+      </div>`;
+    }).join('');
+  } else ab.style.display='none';
+  const fb = document.getElementById('md-findings-block');
+  const fl = document.getElementById('md-findings-list');
+  if((c.findings||[]).length){
+    fb.style.display='block';
+    fl.innerHTML=(c.findings||[]).map(f=>`
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:6px;margin-bottom:4px;border-left:3px solid var(--red)">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:80px;flex-shrink:0">${f.txn?f.txn.split('·')[0].trim():''}</span>
+        <div><div style="font-size:12px;font-weight:500;color:var(--text)">${f.name}</div>${f.note?`<div style="font-size:11px;color:var(--text2);margin-top:2px">${f.note}</div>`:''}</div>
+      </div>`).join('');
+  } else fb.style.display='none';
+  const rb = document.getElementById('md-root-block');
+  const rp = document.getElementById('md-root');
+  if(c.rootCause){ rb.style.display='block'; rp.textContent=c.rootCause; } else rb.style.display='none';
+  const lcb = document.getElementById('md-load-btn');
+  if(lcb) lcb.style.display = c.id===APP.incident.id?'none':'inline-flex';
+  const ccb = document.getElementById('md-close-case-btn');
+  if(ccb){ ccb.style.display=c.status==='closed'?'none':'inline-flex'; }
+  openModal('case-detail');
+}
+
+function previewAttachment(name, data, type) {
+  if(type&&type.includes('image')) { window.open(data,'_blank'); }
+  else { const a=document.createElement('a'); a.href=data; a.download=name; a.click(); }
+}
+
+function loadCaseFromDetail() {
+  const c = APP.cases.find(x=>x.id===_detailCaseId);
+  if(!c) return;
+  if(APP.incident.id && APP.incident.id!==c.id) snapshotCurrentCase();
+  APP.incident = JSON.parse(JSON.stringify(c));
+  if(c.checkState) Object.assign(APP.state, c.checkState);
+  closeModal('case-detail');
+  renderAll();
+  showToast('Caso '+c.id+' cargado en diagnóstico','blue');
+  goView('checklist',null);
+  save();
+}
+
+function closeCaseFromDetail() {
+  closeCase(_detailCaseId);
+  closeModal('case-detail');
+}
+
+// ========== REPORT ==========
+function renderReport() {
+  if(APP.incident.id) snapshotCurrentCase();
+  const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v||'—'; };
+  set('rep-inc-name', APP.incident.id ? APP.incident.id+' — '+APP.incident.name : '—');
+  set('rep-start', APP.incident.start ? new Date(APP.incident.start).toLocaleString('es-CO') : null);
+  set('rep-analyst', APP.user + ' · ' + APP.role);
+  set('rep-symptom', APP.incident.symptom);
+  set('rep-header-sub', APP.incident.id ? APP.incident.id+' · '+(APP.incident.priority||'') : 'Sin caso activo');
+  const flags = CHECKS.filter(c=>APP.state[c.id].status==='flag');
+  const oks   = CHECKS.filter(c=>APP.state[c.id].status==='ok');
+  const rf = document.getElementById('rep-findings');
+  const ro = document.getElementById('rep-ok-list');
+  if(rf) {
+    if(!flags.length) rf.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin hallazgos. Completa el checklist primero.</div>';
+    else rf.innerHTML = flags.map(c=>`
+<div class="finding-item ${c.crit==='h'?'high':'med'}">
+  <div class="finding-txn">${c.txn.split('·')[0].trim()}</div>
+  <div class="finding-body">
+    <div class="finding-name">${c.name}</div>
+    <div class="finding-note">${APP.state[c.id].note||'Sin notas'}</div>
+  </div>
+</div>`).join('');
+  }
+  if(ro) {
+    if(!oks.length) ro.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin ítems verificados aún.</div>';
+    else ro.innerHTML = oks.map(c=>`
+<div class="finding-item ok">
+  <div class="finding-txn">${c.txn.split('·')[0].trim()}</div>
+  <div class="finding-body"><div class="finding-name">${c.name}</div></div>
+</div>`).join('');
+  }
+}
+
+function setRepStatus(st) {
+  APP.repStatus = st;
+  if(st==='Resuelto' && APP.incident.id) {
+    const conc = document.getElementById('rep-conclusion');
+    if(conc) APP.incident.rootCause = conc.value;
+    APP.incident.conclusion = conc?conc.value:'';
+    closeCase(APP.incident.id);
+  }
+  showToast('Estado actualizado: '+st, st==='Resuelto'?'green':'blue');
+  save();
+}
+
+function copyReport() {
+  if(APP.incident.id) snapshotCurrentCase();
+  const flags = CHECKS.filter(c=>APP.state[c.id].status==='flag');
+  const oks   = CHECKS.filter(c=>APP.state[c.id].status==='ok');
+  const conc  = document.getElementById('rep-conclusion');
+  let txt = `=== REPORTE DIAGNÓSTICO SAP BASIS ===\n`;
+  txt += `Caso      : ${APP.incident.id||'—'} — ${APP.incident.name||'—'}\n`;
+  txt += `Apertura  : ${APP.incident.start ? new Date(APP.incident.start).toLocaleString('es-CO') : '—'}\n`;
+  txt += `Analista  : ${APP.user} · ${APP.role}\n`;
+  txt += `Sistema   : ${APP.system}\n`;
+  txt += `Prioridad : ${APP.incident.priority||'—'}\n`;
+  txt += `\nSÍNTOMA:\n${APP.incident.symptom||'—'}\n`;
+  if(APP.incident.errorMsg) txt += `\nMENSAJE DE ERROR:\n${APP.incident.errorMsg}\n`;
+  txt += `\nHALLAZGOS (${flags.length}):\n`;
+  flags.forEach(c => txt += `  [!] ${c.txn.split('·')[0].trim()} — ${c.name}\n      ${APP.state[c.id].note||'(sin notas)'}\n`);
+  txt += `\nVERIFICADOS SIN PROBLEMA (${oks.length}):\n`;
+  oks.forEach(c => txt += `  [OK] ${c.name}\n`);
+  txt += `\nCONCLUSIÓN / CAUSA RAÍZ:\n${conc?.value||'Pendiente'}\n`;
+  txt += `\nESTADO: ${APP.repStatus}\n`;
+  navigator.clipboard && navigator.clipboard.writeText(txt);
+  showToast('Reporte copiado al portapapeles', 'green');
+}
+
+function printReport() { window.print(); }
+
+// ========== GIST SETTINGS ==========
+function saveGistSettings() {
+  const t = (document.getElementById('settings-gist-token').value||'').trim();
+  const i = (document.getElementById('settings-gist-id').value||'').trim();
+  if(!t || !i) { showToast('Ingresa el Token y el Gist ID','amber'); return; }
+  APP.gistToken = t;
+  APP.gistId = i;
+  save();
+  updateSettingsPanel();
+  showToast('Credenciales guardadas — sincronizando...','green');
+  gistPull();
+}
+
+function updateSettingsPanel() {
+  const dot = document.getElementById('settings-sync-dot');
+  const lbl = document.getElementById('settings-sync-label');
+  const gid = document.getElementById('settings-gist-id-display');
+  const ti  = document.getElementById('settings-gist-token');
+  const ii  = document.getElementById('settings-gist-id');
+  if(APP.gistToken && ti) ti.value = APP.gistToken;
+  if(APP.gistId && ii) ii.value = APP.gistId;
+  if(gid) gid.textContent = APP.gistId ? APP.gistId.slice(0,8)+'...' : '—';
+  const enabled = gistEnabled();
+  if(dot) dot.style.background = enabled ? 'var(--green)' : 'var(--text3)';
+  if(lbl) lbl.textContent = enabled ? 'Sincronización activa' : 'Sin configurar — datos solo locales';
+}
+
+function exportJSON() {
+  if(APP.incident.id) snapshotCurrentCase();
+  const data = { exportDate: new Date().toISOString(), cases: APP.cases, caseCounter: APP.caseCounter };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sapdx_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  showToast('Backup JSON exportado','green');
+}
+
+// ========== TOAST ==========
+function showToast(msg, type) {
+  const colors = { green: 'var(--green)', red: 'var(--red)', blue: 'var(--blue)', amber: 'var(--amber)' };
+  const tc = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="toast-dot" style="background:${colors[type]||colors.blue}"></div>${msg}`;
+  tc.appendChild(t);
+  setTimeout(() => t.style.opacity='0', 2800);
+  setTimeout(() => t.remove(), 3100);
+}
+
+// ========== RENDER ALL ==========
+function renderAll() {
+  renderChecklist();
+  updateDashboard();
+  renderHistory();
+  updateSettingsPanel();
+  setSyncStatus(gistEnabled() ? 'idle' : 'offline');
+}
+
+// ========== INIT ==========
+load();
+// Pre-fill gist fields in login screen if already configured
+(function() {
+  try {
+    const d = localStorage.getItem('sapbasis_dx');
+    if(d) {
+      const p = JSON.parse(d);
+      if(p.gistToken) {
+        const tf = document.getElementById('login-gist-token');
+        if(tf) tf.placeholder = 'Token guardado — deja vacío para mantener';
+      }
+      if(p.user) {
+        const nf = document.getElementById('login-name');
+        if(nf) nf.value = p.user;
+      }
+    }
+  } catch(e){}
+})();
+</script>
+
+<style>
+@media print {
+  #login-screen { display: none !important; }
+  .topbar, .sidebar, .filter-pills, .verdict-row, .note-area, .btn-sm,
+  .modal-overlay, .toast-container, .inc-badge, .cl-toolbar button { display: none !important; }
+  .layout { grid-template-columns: 1fr !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .card, .dc, .chk-item, .report-card { border: 1px solid #ddd !important; background: #fff !important; }
+  .dc-text, .finding-name, .finding-note { color: #333 !important; }
+  .page-title { color: #000 !important; }
+}
+</style>
+</body>
+</html>
