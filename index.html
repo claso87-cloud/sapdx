@@ -2455,7 +2455,17 @@ function copyReport() {
   showToast('Reporte copiado al portapapeles', 'green');
 }
 
-function printReport() { window.print(); }
+function printReport() {
+  // Save conclusion before printing so it appears in the PDF
+  const concEl = document.getElementById('rep-conclusion');
+  if(concEl && concEl.value.trim()) {
+    APP.incident.rootCause  = concEl.value.trim();
+    APP.incident.conclusion = concEl.value.trim();
+    snapshotCurrentCase();
+    save();
+  }
+  window.print();
+}
 
 // ========== GIST SETTINGS ==========
 function saveGistSettings() {
