@@ -2163,37 +2163,40 @@ function createIncident() {
 }
 
 function snapshotCurrentCase() {
-  // Save checklist state into current incident
+  if(!APP.incident.id) return;
+  // Capture conclusion textarea BEFORE snapshot
+  const concEl = document.getElementById('rep-conclusion');
+  if(concEl && concEl.value.trim()) {
+    APP.incident.rootCause  = concEl.value.trim();
+    APP.incident.conclusion = concEl.value.trim();
+  }
   APP.incident.checkState = JSON.parse(JSON.stringify(APP.state));
-  APP.incident.closedAt = APP.incident.closedAt || null;
-  // Add/update in cases array
-  const idx = APP.cases.findIndex(c=>c.id===APP.incident.id);
+  const okCount   = CHECKS.filter(c=>APP.state[c.id].status==='ok').length;
+  const flagCount = CHECKS.filter(c=>APP.state[c.id].status==='flag').length;
+  const skipCount = CHECKS.filter(c=>APP.state[c.id].status==='skip').length;
   const snap = JSON.parse(JSON.stringify(APP.incident));
-  // Compute summary
   snap.totalChecks = CHECKS.length;
-  snap.okCount = CHECKS.filter(c=>APP.state[c.id].status==='ok').length;
-  snap.flagCount = CHECKS.filter(c=>APP.state[c.id].status==='flag').length;
-  snap.pct = Math.round((snap.okCount+snap.flagCount+CHECKS.filter(c=>APP.state[c.id].status==='skip').length)/CHECKS.length*100);
-  snap.findings = CHECKS.filter(c=>APP.state[c.id].status==='flag').map(c=>({id:c.id,name:c.name,txn:c.txn,note:APP.state[c.id].note}));
+  snap.okCount     = okCount;
+  snap.flagCount   = flagCount;
+  snap.pct         = Math.round((okCount+flagCount+skipCount)/CHECKS.length*100);
+  snap.findings    = CHECKS.filter(c=>APP.state[c.id].status==='flag').map(c=>({id:c.id,name:c.name,txn:c.txn,note:APP.state[c.id].note}));
+  const idx = APP.cases.findIndex(c=>c.id===APP.incident.id);
   if(idx>=0) APP.cases[idx] = snap;
   else APP.cases.unshift(snap);
 }
 
 function closeCase(cid) {
-  const idx = APP.cases.findIndex(c=>c.id===cid);
-  const src = idx>=0 ? APP.cases[idx] : null;
-  // If it's the active case, snapshot first
+  const now = new Date().toISOString();
   if(APP.incident.id===cid) {
+    // Mark closed BEFORE snapshot so status propagates into cases array
+    APP.incident.status   = 'closed';
+    APP.incident.closedAt = now;
     snapshotCurrentCase();
-    APP.incident.status='closed';
-    APP.incident.closedAt=new Date().toISOString();
-    // Update in cases
-    const idx2=APP.cases.findIndex(c=>c.id===cid);
-    if(idx2>=0){ APP.cases[idx2].status='closed'; APP.cases[idx2].closedAt=APP.incident.closedAt; }
-  } else if(src) {
-    src.status='closed'; src.closedAt=new Date().toISOString();
+  } else {
+    const idx = APP.cases.findIndex(c=>c.id===cid);
+    if(idx>=0) { APP.cases[idx].status='closed'; APP.cases[idx].closedAt=now; }
   }
-  showToast('Caso '+cid+' cerrado','green');
+  showToast('Caso '+cid+' cerrado y guardado','green');
   renderHistory();
   updateDashboard();
   save();
@@ -2388,19 +2391,51 @@ function closeCaseFromDetail() {
 
 // ========== REPORT ==========
 function renderReport() {
-  if(APP.incident.id) snapshotCurrentCase();
+  const inc = APP.incident;
   const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v||'—'; };
-  set('rep-inc-name', APP.incident.id ? APP.incident.id+' — '+APP.incident.name : '—');
-  set('rep-start', APP.incident.start ? new Date(APP.incident.start).toLocaleString('es-CO') : null);
-  set('rep-analyst', APP.user + ' · ' + APP.role);
-  set('rep-symptom', APP.incident.symptom);
-  set('rep-header-sub', APP.incident.id ? APP.incident.id+' · '+(APP.incident.priority||'') : 'Sin caso activo');
+  set('rep-inc-name',  inc.id ? inc.id+' — '+inc.name : '—');
+  set('rep-start',     inc.start ? new Date(inc.start).toLocaleString('es-CO') : null);
+  set('rep-analyst',   APP.user+' · '+APP.role);
+  set('rep-symptom',   inc.symptom);
+  const closedTxt = inc.closedAt ? ' · Cerrado: '+new Date(inc.closedAt).toLocaleString('es-CO') : '';
+  const statusLabel = inc.status==='closed' ? 'CERRADO' : 'ABIERTO';
+  set('rep-header-sub', inc.id ? inc.id+' · '+(inc.priority||'')+' · '+statusLabel+closedTxt : 'Sin caso activo');
+  // Restore conclusion/rootCause into textarea
+  const concEl = document.getElementById('rep-conclusion');
+  if(concEl && !concEl.value.trim()) {
+    concEl.value = inc.rootCause || inc.conclusion || '';
+  }
+  // Closed status banner
+  let banner = document.getElementById('rep-status-banner');
+  if(!banner) {
+    banner = document.createElement('div');
+    banner.id = 'rep-status-banner';
+    const rb = document.getElementById('report-body');
+    if(rb) rb.insertBefore(banner, rb.firstChild);
+  }
+  if(inc.status==='closed') {
+    banner.style.cssText='background:var(--greendim);border:1px solid var(--green)33;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green);margin-bottom:14px;display:flex;align-items:center;gap:8px';
+    banner.innerHTML='<span>✓</span><strong>Caso cerrado</strong> &nbsp;'+new Date(inc.closedAt).toLocaleString('es-CO');
+  } else {
+    banner.style.display='none';
+  }
+  // Toggle Resuelto button
+  const resolvedBtn = document.querySelector('button[onclick*="Resuelto"]');
+  if(resolvedBtn) {
+    if(inc.status==='closed') {
+      resolvedBtn.textContent='Caso cerrado ✓';
+      resolvedBtn.disabled=true; resolvedBtn.style.opacity='.5'; resolvedBtn.style.cursor='default';
+    } else {
+      resolvedBtn.textContent='Marcar como resuelto';
+      resolvedBtn.disabled=false; resolvedBtn.style.opacity='1'; resolvedBtn.style.cursor='pointer';
+    }
+  }
   const flags = CHECKS.filter(c=>APP.state[c.id].status==='flag');
   const oks   = CHECKS.filter(c=>APP.state[c.id].status==='ok');
   const rf = document.getElementById('rep-findings');
   const ro = document.getElementById('rep-ok-list');
   if(rf) {
-    if(!flags.length) rf.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin hallazgos. Completa el checklist primero.</div>';
+    if(!flags.length) rf.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin hallazgos registrados.</div>';
     else rf.innerHTML = flags.map(c=>`
 <div class="finding-item ${c.crit==='h'?'high':'med'}">
   <div class="finding-txn">${c.txn.split('·')[0].trim()}</div>
@@ -2422,14 +2457,22 @@ function renderReport() {
 
 function setRepStatus(st) {
   APP.repStatus = st;
-  if(st==='Resuelto' && APP.incident.id) {
-    const conc = document.getElementById('rep-conclusion');
-    if(conc) APP.incident.rootCause = conc.value;
-    APP.incident.conclusion = conc?conc.value:'';
-    closeCase(APP.incident.id);
+  // Always save conclusion text first
+  const concEl = document.getElementById('rep-conclusion');
+  const concText = concEl ? concEl.value.trim() : '';
+  if(concText) {
+    APP.incident.rootCause  = concText;
+    APP.incident.conclusion = concText;
   }
-  showToast('Estado actualizado: '+st, st==='Resuelto'?'green':'blue');
-  save();
+  APP.incident.repStatus = st;
+  if(st==='Resuelto' && APP.incident.id) {
+    closeCase(APP.incident.id);
+    setTimeout(()=>renderReport(), 150);
+  } else {
+    snapshotCurrentCase();
+    save();
+  }
+  showToast('Estado: '+st+(st==='Resuelto'?' — caso cerrado':''), st==='Resuelto'?'green':'blue');
 }
 
 function copyReport() {
@@ -2449,10 +2492,13 @@ function copyReport() {
   flags.forEach(c => txt += `  [!] ${c.txn.split('·')[0].trim()} — ${c.name}\n      ${APP.state[c.id].note||'(sin notas)'}\n`);
   txt += `\nVERIFICADOS SIN PROBLEMA (${oks.length}):\n`;
   oks.forEach(c => txt += `  [OK] ${c.name}\n`);
-  txt += `\nCONCLUSIÓN / CAUSA RAÍZ:\n${conc?.value||'Pendiente'}\n`;
-  txt += `\nESTADO: ${APP.repStatus}\n`;
+  const conclusionTxt = (conc&&conc.value.trim()) ? conc.value.trim() : (APP.incident.rootCause||APP.incident.conclusion||'Pendiente');
+  if(conclusionTxt!=='Pendiente'){ APP.incident.rootCause=conclusionTxt; APP.incident.conclusion=conclusionTxt; snapshotCurrentCase(); save(); }
+  txt += `\nCONCLUSIÓN / CAUSA RAÍZ:\n${conclusionTxt}\n`;
+  txt += `\nESTADO: ${APP.incident.status==='closed'?'CERRADO':(APP.repStatus||'En diagnóstico')}\n`;
+  if(APP.incident.closedAt) txt += `Cierre    : ${new Date(APP.incident.closedAt).toLocaleString('es-CO')}\n`;
   navigator.clipboard && navigator.clipboard.writeText(txt);
-  showToast('Reporte copiado al portapapeles', 'green');
+  showToast('Reporte copiado al portapapeles','green');
 }
 
 function printReport() {
