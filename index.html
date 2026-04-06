@@ -1761,8 +1761,13 @@ async function gistPull() {
 }
 
 function save() {
+  // Always capture conclusion textarea into APP.incident before persisting
+  const concEl = document.getElementById('rep-conclusion');
+  if(concEl && concEl.value.trim() && APP.incident.id) {
+    APP.incident.rootCause  = concEl.value.trim();
+    APP.incident.conclusion = concEl.value.trim();
+  }
   try { localStorage.setItem('sapbasis_dx', JSON.stringify(APP)); } catch(e){}
-  // Debounced Gist push
   if(gistEnabled()) {
     clearTimeout(save._t);
     save._t = setTimeout(()=>gistPush(), 1500);
@@ -2164,22 +2169,25 @@ function createIncident() {
 
 function snapshotCurrentCase() {
   if(!APP.incident.id) return;
-  // Capture conclusion textarea BEFORE snapshot
+  // 1. Capture conclusion textarea
   const concEl = document.getElementById('rep-conclusion');
   if(concEl && concEl.value.trim()) {
     APP.incident.rootCause  = concEl.value.trim();
     APP.incident.conclusion = concEl.value.trim();
   }
+  // 2. Save checklist state inside incident
   APP.incident.checkState = JSON.parse(JSON.stringify(APP.state));
-  const okCount   = CHECKS.filter(c=>APP.state[c.id].status==='ok').length;
-  const flagCount = CHECKS.filter(c=>APP.state[c.id].status==='flag').length;
-  const skipCount = CHECKS.filter(c=>APP.state[c.id].status==='skip').length;
+  // 3. Build snapshot (deep copy of incident + computed stats)
+  const ok   = CHECKS.filter(c=>APP.state[c.id].status==='ok').length;
+  const flag = CHECKS.filter(c=>APP.state[c.id].status==='flag').length;
+  const skip = CHECKS.filter(c=>APP.state[c.id].status==='skip').length;
   const snap = JSON.parse(JSON.stringify(APP.incident));
-  snap.totalChecks = CHECKS.length;
-  snap.okCount     = okCount;
-  snap.flagCount   = flagCount;
-  snap.pct         = Math.round((okCount+flagCount+skipCount)/CHECKS.length*100);
-  snap.findings    = CHECKS.filter(c=>APP.state[c.id].status==='flag').map(c=>({id:c.id,name:c.name,txn:c.txn,note:APP.state[c.id].note}));
+  snap.okCount  = ok;
+  snap.flagCount= flag;
+  snap.pct      = Math.round((ok+flag+skip)/CHECKS.length*100);
+  snap.findings = CHECKS.filter(c=>APP.state[c.id].status==='flag')
+                        .map(c=>({id:c.id,name:c.name,txn:c.txn,note:APP.state[c.id].note}));
+  // 4. Upsert into cases array — status/closedAt from APP.incident already included in snap
   const idx = APP.cases.findIndex(c=>c.id===APP.incident.id);
   if(idx>=0) APP.cases[idx] = snap;
   else APP.cases.unshift(snap);
@@ -2188,18 +2196,20 @@ function snapshotCurrentCase() {
 function closeCase(cid) {
   const now = new Date().toISOString();
   if(APP.incident.id===cid) {
-    // Mark closed BEFORE snapshot so status propagates into cases array
-    APP.incident.status   = 'closed';
+    APP.incident.status   = 'closed';   // set BEFORE snapshot
     APP.incident.closedAt = now;
-    snapshotCurrentCase();
+    snapshotCurrentCase();              // snapshot propagates status into cases[]
   } else {
     const idx = APP.cases.findIndex(c=>c.id===cid);
-    if(idx>=0) { APP.cases[idx].status='closed'; APP.cases[idx].closedAt=now; }
+    if(idx>=0) {
+      APP.cases[idx].status   = 'closed';
+      APP.cases[idx].closedAt = now;
+    }
   }
-  showToast('Caso '+cid+' cerrado y guardado','green');
+  save();
   renderHistory();
   updateDashboard();
-  save();
+  showToast('Caso '+cid+' cerrado','green');
 }
 
 function addFeedActivity_case(cid, action) {
@@ -2393,19 +2403,19 @@ function closeCaseFromDetail() {
 function renderReport() {
   const inc = APP.incident;
   const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v||'—'; };
-  set('rep-inc-name',  inc.id ? inc.id+' — '+inc.name : '—');
-  set('rep-start',     inc.start ? new Date(inc.start).toLocaleString('es-CO') : null);
-  set('rep-analyst',   APP.user+' · '+APP.role);
-  set('rep-symptom',   inc.symptom);
-  const closedTxt = inc.closedAt ? ' · Cerrado: '+new Date(inc.closedAt).toLocaleString('es-CO') : '';
-  const statusLabel = inc.status==='closed' ? 'CERRADO' : 'ABIERTO';
-  set('rep-header-sub', inc.id ? inc.id+' · '+(inc.priority||'')+' · '+statusLabel+closedTxt : 'Sin caso activo');
-  // Restore conclusion/rootCause into textarea
+  set('rep-inc-name', inc.id ? inc.id+' — '+inc.name : '—');
+  set('rep-start',    inc.start ? new Date(inc.start).toLocaleString('es-CO') : null);
+  set('rep-analyst',  APP.user+' · '+APP.role);
+  set('rep-symptom',  inc.symptom);
+  const isClosed   = inc.status==='closed';
+  const closedTxt  = inc.closedAt ? ' · Cerrado: '+new Date(inc.closedAt).toLocaleString('es-CO') : '';
+  set('rep-header-sub', inc.id ? inc.id+' · '+(inc.priority||'')+' · '+(isClosed?'CERRADO':'ABIERTO')+closedTxt : 'Sin caso activo');
+
+  // Restore conclusion into textarea (always overwrite with saved value)
   const concEl = document.getElementById('rep-conclusion');
-  if(concEl && !concEl.value.trim()) {
-    concEl.value = inc.rootCause || inc.conclusion || '';
-  }
-  // Closed status banner
+  if(concEl) concEl.value = inc.rootCause || inc.conclusion || '';
+
+  // Closed banner
   let banner = document.getElementById('rep-status-banner');
   if(!banner) {
     banner = document.createElement('div');
@@ -2413,103 +2423,109 @@ function renderReport() {
     const rb = document.getElementById('report-body');
     if(rb) rb.insertBefore(banner, rb.firstChild);
   }
-  if(inc.status==='closed') {
-    banner.style.cssText='background:var(--greendim);border:1px solid var(--green)33;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green);margin-bottom:14px;display:flex;align-items:center;gap:8px';
-    banner.innerHTML='<span>✓</span><strong>Caso cerrado</strong> &nbsp;'+new Date(inc.closedAt).toLocaleString('es-CO');
+  if(isClosed && inc.closedAt) {
+    banner.style.cssText = 'background:var(--greendim);border:1px solid var(--green)33;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green);margin-bottom:14px;display:flex;align-items:center;gap:8px';
+    banner.innerHTML = '<span style="font-size:16px">✓</span><strong>Caso cerrado</strong>&nbsp;—&nbsp;'+new Date(inc.closedAt).toLocaleString('es-CO');
   } else {
-    banner.style.display='none';
+    banner.style.cssText = 'display:none';
   }
-  // Toggle Resuelto button
+
+  // Disable Resuelto button if already closed
   const resolvedBtn = document.querySelector('button[onclick*="Resuelto"]');
   if(resolvedBtn) {
-    if(inc.status==='closed') {
-      resolvedBtn.textContent='Caso cerrado ✓';
-      resolvedBtn.disabled=true; resolvedBtn.style.opacity='.5'; resolvedBtn.style.cursor='default';
-    } else {
-      resolvedBtn.textContent='Marcar como resuelto';
-      resolvedBtn.disabled=false; resolvedBtn.style.opacity='1'; resolvedBtn.style.cursor='pointer';
-    }
+    resolvedBtn.textContent = isClosed ? 'Caso cerrado ✓' : 'Marcar como resuelto';
+    resolvedBtn.disabled    = isClosed;
+    resolvedBtn.style.opacity = isClosed ? '.5' : '1';
+    resolvedBtn.style.cursor  = isClosed ? 'default' : 'pointer';
   }
+
+  // Findings
   const flags = CHECKS.filter(c=>APP.state[c.id].status==='flag');
   const oks   = CHECKS.filter(c=>APP.state[c.id].status==='ok');
   const rf = document.getElementById('rep-findings');
   const ro = document.getElementById('rep-ok-list');
-  if(rf) {
-    if(!flags.length) rf.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin hallazgos registrados.</div>';
-    else rf.innerHTML = flags.map(c=>`
+  if(rf) rf.innerHTML = flags.length ? flags.map(c=>`
 <div class="finding-item ${c.crit==='h'?'high':'med'}">
   <div class="finding-txn">${c.txn.split('·')[0].trim()}</div>
   <div class="finding-body">
     <div class="finding-name">${c.name}</div>
     <div class="finding-note">${APP.state[c.id].note||'Sin notas'}</div>
   </div>
-</div>`).join('');
-  }
-  if(ro) {
-    if(!oks.length) ro.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin ítems verificados aún.</div>';
-    else ro.innerHTML = oks.map(c=>`
+</div>`).join('') : '<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin hallazgos registrados.</div>';
+  if(ro) ro.innerHTML = oks.length ? oks.map(c=>`
 <div class="finding-item ok">
   <div class="finding-txn">${c.txn.split('·')[0].trim()}</div>
   <div class="finding-body"><div class="finding-name">${c.name}</div></div>
-</div>`).join('');
-  }
+</div>`).join('') : '<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin ítems verificados aún.</div>';
 }
 
 function setRepStatus(st) {
-  APP.repStatus = st;
-  // Always save conclusion text first
+  // 1. Capture conclusion before anything else
   const concEl = document.getElementById('rep-conclusion');
   const concText = concEl ? concEl.value.trim() : '';
-  if(concText) {
+  if(concText && APP.incident.id) {
     APP.incident.rootCause  = concText;
     APP.incident.conclusion = concText;
   }
+  APP.repStatus         = st;
   APP.incident.repStatus = st;
   if(st==='Resuelto' && APP.incident.id) {
+    // closeCase sets status=closed, snapshots, saves
     closeCase(APP.incident.id);
-    setTimeout(()=>renderReport(), 150);
+    // Refresh report to show closed banner and disable button
+    setTimeout(()=>renderReport(), 200);
+    showToast('Caso cerrado correctamente','green');
   } else {
     snapshotCurrentCase();
     save();
+    showToast('Estado: '+st,'blue');
   }
-  showToast('Estado: '+st+(st==='Resuelto'?' — caso cerrado':''), st==='Resuelto'?'green':'blue');
 }
 
 function copyReport() {
-  if(APP.incident.id) snapshotCurrentCase();
-  const flags = CHECKS.filter(c=>APP.state[c.id].status==='flag');
-  const oks   = CHECKS.filter(c=>APP.state[c.id].status==='ok');
-  const conc  = document.getElementById('rep-conclusion');
-  let txt = `=== REPORTE DIAGNÓSTICO SAP BASIS ===\n`;
-  txt += `Caso      : ${APP.incident.id||'—'} — ${APP.incident.name||'—'}\n`;
-  txt += `Apertura  : ${APP.incident.start ? new Date(APP.incident.start).toLocaleString('es-CO') : '—'}\n`;
-  txt += `Analista  : ${APP.user} · ${APP.role}\n`;
-  txt += `Sistema   : ${APP.system}\n`;
-  txt += `Prioridad : ${APP.incident.priority||'—'}\n`;
-  txt += `\nSÍNTOMA:\n${APP.incident.symptom||'—'}\n`;
-  if(APP.incident.errorMsg) txt += `\nMENSAJE DE ERROR:\n${APP.incident.errorMsg}\n`;
-  txt += `\nHALLAZGOS (${flags.length}):\n`;
-  flags.forEach(c => txt += `  [!] ${c.txn.split('·')[0].trim()} — ${c.name}\n      ${APP.state[c.id].note||'(sin notas)'}\n`);
-  txt += `\nVERIFICADOS SIN PROBLEMA (${oks.length}):\n`;
-  oks.forEach(c => txt += `  [OK] ${c.name}\n`);
-  const conclusionTxt = (conc&&conc.value.trim()) ? conc.value.trim() : (APP.incident.rootCause||APP.incident.conclusion||'Pendiente');
-  if(conclusionTxt!=='Pendiente'){ APP.incident.rootCause=conclusionTxt; APP.incident.conclusion=conclusionTxt; snapshotCurrentCase(); save(); }
-  txt += `\nCONCLUSIÓN / CAUSA RAÍZ:\n${conclusionTxt}\n`;
-  txt += `\nESTADO: ${APP.incident.status==='closed'?'CERRADO':(APP.repStatus||'En diagnóstico')}\n`;
-  if(APP.incident.closedAt) txt += `Cierre    : ${new Date(APP.incident.closedAt).toLocaleString('es-CO')}\n`;
+  const inc  = APP.incident;
+  const conc = document.getElementById('rep-conclusion');
+  const concText = (conc && conc.value.trim()) ? conc.value.trim()
+                 : (inc.rootCause || inc.conclusion || 'Pendiente');
+  if(concText && concText !== 'Pendiente' && inc.id) {
+    inc.rootCause = concText; inc.conclusion = concText;
+    snapshotCurrentCase(); save();
+  }
+  const flags    = CHECKS.filter(c => APP.state[c.id].status === 'flag');
+  const oks      = CHECKS.filter(c => APP.state[c.id].status === 'ok');
+  const isClosed = inc.status === 'closed';
+  const nl = '\n';
+  let txt = '=== REPORTE DIAGNÓSTICO SAP BASIS ===' + nl;
+  txt += 'Caso      : ' + (inc.id||'—') + ' — ' + (inc.name||'—') + nl;
+  txt += 'Estado    : ' + (isClosed ? 'CERRADO' : (APP.repStatus||'En diagnóstico')) + nl;
+  txt += 'Apertura  : ' + (inc.start ? new Date(inc.start).toLocaleString('es-CO') : '—') + nl;
+  if(inc.closedAt) txt += 'Cierre    : ' + new Date(inc.closedAt).toLocaleString('es-CO') + nl;
+  txt += 'Analista  : ' + APP.user + ' · ' + APP.role + nl;
+  txt += 'Sistema   : ' + APP.system + nl;
+  txt += 'Prioridad : ' + (inc.priority||'—') + nl;
+  txt += nl + 'SÍNTOMA:' + nl + (inc.symptom||'—') + nl;
+  if(inc.errorMsg) txt += nl + 'MENSAJE DE ERROR:' + nl + inc.errorMsg + nl;
+  txt += nl + 'HALLAZGOS (' + flags.length + '):' + nl;
+  flags.forEach(c => {
+    txt += '  [!] ' + c.txn.split('·')[0].trim() + ' — ' + c.name + nl;
+    txt += '      ' + (APP.state[c.id].note || '(sin notas)') + nl;
+  });
+  txt += nl + 'VERIFICADOS SIN PROBLEMA (' + oks.length + '):' + nl;
+  oks.forEach(c => { txt += '  [OK] ' + c.name + nl; });
+  txt += nl + 'CONCLUSIÓN / CAUSA RAÍZ:' + nl + concText + nl;
   navigator.clipboard && navigator.clipboard.writeText(txt);
-  showToast('Reporte copiado al portapapeles','green');
+  showToast('Reporte copiado al portapapeles', 'green');
 }
 
 function printReport() {
-  // Save conclusion before printing so it appears in the PDF
+  // Ensure the conclusion textarea value is persisted before printing
   const concEl = document.getElementById('rep-conclusion');
-  if(concEl && concEl.value.trim()) {
-    APP.incident.rootCause  = concEl.value.trim();
-    APP.incident.conclusion = concEl.value.trim();
-    snapshotCurrentCase();
-    save();
+  const concText = concEl ? concEl.value.trim() : '';
+  if(concText && APP.incident.id) {
+    APP.incident.rootCause  = concText;
+    APP.incident.conclusion = concText;
   }
+  if(APP.incident.id) { snapshotCurrentCase(); save(); }
   window.print();
 }
 
@@ -2573,6 +2589,11 @@ function renderAll() {
 }
 
 // ========== INIT ==========
+// Save before any page unload (refresh, close, navigate away)
+window.addEventListener('beforeunload', () => {
+  if(APP.incident.id) { snapshotCurrentCase(); }
+  try { localStorage.setItem('sapbasis_dx', JSON.stringify(APP)); } catch(e){}
+});
 load();
 // Pre-fill gist fields in login screen if already configured
 (function() {
