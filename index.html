@@ -1171,9 +1171,10 @@ input, textarea, select { font-family: var(--sans); }
           <div class="section-label mt-16">Verificados sin problema</div>
           <div id="rep-ok-list"><div style="font-size:12px;color:var(--text3);padding:10px 0">Sin ítems verificados aún.</div></div>
           <div class="section-label mt-16">Causa raíz · conclusión final</div>
-          <textarea class="note-area" id="rep-conclusion" style="min-height:90px;width:100%" placeholder="Escribe aquí la causa raíz identificada, la acción correctiva aplicada y el resultado..."></textarea>
-          <div class="section-label mt-16">Estado</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <textarea class="note-area no-print" id="rep-conclusion" style="min-height:90px;width:100%" placeholder="Escribe aquí la causa raíz identificada, la acción correctiva aplicada y el resultado..." oninput="syncConclusionPrint(this.value)"></textarea>
+          <div id="rep-conclusion-print" class="print-only" style="display:none;font-size:12px;color:#222;line-height:1.7;white-space:pre-wrap;padding:10px 12px;border:1px solid #ccc;border-radius:6px;min-height:60px;background:#fafafa"></div>
+          <div class="section-label mt-16 no-print">Estado</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
             <button class="btn-sm" onclick="setRepStatus('En diagnóstico')">En diagnóstico</button>
             <button class="btn-sm" onclick="setRepStatus('Causa identificada')">Causa identificada</button>
             <button class="btn-sm primary" onclick="setRepStatus('Resuelto')">Marcar como resuelto</button>
@@ -2412,9 +2413,12 @@ function renderReport() {
   const closedTxt  = inc.closedAt ? ' · Cerrado: '+new Date(inc.closedAt).toLocaleString('es-CO') : '';
   set('rep-header-sub', inc.id ? inc.id+' · '+(inc.priority||'')+' · '+(isClosed?'CERRADO':'ABIERTO')+closedTxt : 'Sin caso activo');
 
-  // Restore conclusion into textarea (always overwrite with saved value)
-  const concEl = document.getElementById('rep-conclusion');
-  if(concEl) concEl.value = inc.rootCause || inc.conclusion || '';
+  // Restore conclusion into textarea AND print div
+  const concEl   = document.getElementById('rep-conclusion');
+  const printDiv = document.getElementById('rep-conclusion-print');
+  const savedText = inc.rootCause || inc.conclusion || '';
+  if(concEl) concEl.value = savedText;
+  if(printDiv) printDiv.textContent = savedText || '(Sin causa raíz registrada)';
 
   // Closed banner
   let banner = document.getElementById('rep-status-banner');
@@ -2518,10 +2522,21 @@ function copyReport() {
   showToast('Reporte copiado al portapapeles', 'green');
 }
 
+function syncConclusionPrint(val) {
+  const printDiv = document.getElementById('rep-conclusion-print');
+  if(printDiv) printDiv.textContent = val;
+}
+
 function printReport() {
-  // Ensure the conclusion textarea value is persisted before printing
-  const concEl = document.getElementById('rep-conclusion');
-  const concText = concEl ? concEl.value.trim() : '';
+  const concEl   = document.getElementById('rep-conclusion');
+  const printDiv = document.getElementById('rep-conclusion-print');
+  // Get text from textarea OR from saved incident data
+  const concText = (concEl && concEl.value.trim())
+    ? concEl.value.trim()
+    : (APP.incident.rootCause || APP.incident.conclusion || '');
+  // Sync to print div (this is what appears in PDF)
+  if(printDiv) printDiv.textContent = concText || '(Sin causa raíz registrada)';
+  // Persist to APP state
   if(concText && APP.incident.id) {
     APP.incident.rootCause  = concText;
     APP.incident.conclusion = concText;
@@ -2618,13 +2633,33 @@ load();
 <style>
 @media print {
   #login-screen { display: none !important; }
-  .topbar, .sidebar, .filter-pills, .verdict-row, .note-area, .btn-sm,
+  .topbar, .sidebar, .filter-pills, .verdict-row, .no-print, .btn-sm,
   .modal-overlay, .toast-container, .inc-badge, .cl-toolbar button { display: none !important; }
   .layout { grid-template-columns: 1fr !important; }
   body { background: #fff !important; color: #000 !important; }
   .card, .dc, .chk-item, .report-card { border: 1px solid #ddd !important; background: #fff !important; }
   .dc-text, .finding-name, .finding-note { color: #333 !important; }
   .page-title { color: #000 !important; }
+  /* Show print-only elements */
+  .print-only { display: block !important; }
+  #rep-conclusion-print {
+    display: block !important;
+    font-size: 12px !important;
+    color: #111 !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    padding: 10px !important;
+    white-space: pre-wrap !important;
+    line-height: 1.7 !important;
+    min-height: 40px !important;
+  }
+  /* Note areas hidden except the print div */
+  .note-area { display: none !important; }
+  /* Status banner visible in print */
+  #rep-status-banner { display: flex !important; color: #155724 !important; background: #d4edda !important; border: 1px solid #c3e6cb !important; }
+  #rep-status-banner strong { color: #155724 !important; }
+  .section-label { color: #333 !important; border-color: #999 !important; }
 }
 </style>
 </body>
