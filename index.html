@@ -1384,12 +1384,25 @@ const CHECKS = [
    ok:'Log limpio o solo mensajes informativos.',bad:'DBIF_*, DP_CANT_CREATE_WP, reinicios frecuentes de WP.',
    interp:'<strong>DBIF_*:</strong> error desde DB2. <strong>DP_*:</strong> problema dispatcher. <strong>Reinicios WP:</strong> dump por ABAP o memoria.',
    next:'Si errores DB2 → db2diag.log + MON_LOCKWAITS. Si reinicios → ST22.'},
-  {id:'c04',layer:'SAP',crit:'m',sec:'A. Primer vistazo — primeros 5 minutos',
-   name:'ST06 — OS Monitor desde SAP',sub:'Ver CPU, memoria y swap del appserver sin salir de SAP',
-   txn:'ST06',qrev:'CPU total %, swap activo, paging rate.',
-   ok:'CPU <70%. Swap=0. Paging=0.',bad:'CPU >90% sostenido. Cualquier swap/paging activo.',
-   interp:'Si paging activo: emergencia, ir a svmon/vmstat inmediatamente. No esperar.',
-   next:'Validar con comandos AIX nativos para evidencia precisa.'},
+  {id:'c04',layer:'SAP',crit:'h',sec:'A. Primer vistazo — primeros 5 minutos',
+   name:'ST06 — OS Monitor desde SAP · Revisión por cada servidor de aplicación',
+   sub:'Validar CPU, memoria libre, swap y disco en los 6 appservers de Compensar ERP PRD',
+   txn:'ST06 → seleccionar cada servidor: VMPBLOMBERG_CEP_03 · VMPCLINGEN_CEP_03 · VMPCONSTANZA_CEP_00 · VMPMAGDALA_CEP_02 · VMPMELDORF_CEP_03 · VMPVAREL_CEP_03',
+   qrev:'Por cada uno de los 6 servidores verificar: (1) Memoria libre (porcentaje) ¿está por encima del 40%? (2) CPU Utilización de usuario + sistema ¿supera el 70%? (3) Average processes waiting ¿mayor a 5? (4) Tamaño de swap real vs swap libre ¿hay swap activo? (5) Disco: ¿hay actividad de almacenar a disco o descargar a disco de RAM?',
+   ok:'Memoria libre ≥ 40% en todos los servidores. CPU utilización < 70%. Swap = 0 KB/s. Paging = 0 %/h. Average processes waiting < 5. Disco sin actividad de swap.',
+   bad:'Memoria libre < 40% en cualquier servidor → alertar a Basis. CPU > 90% sostenido → emergencia. Swap activo (> 0 KB/s) → presión de memoria crítica. Paging activo (> 0 %/h) → emergencia ir a svmon/vmstat inmediatamente.',
+   interp:'<strong>Métricas clave en ST06 por servidor:</strong><br>' +
+     '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">' +
+     '<tr style="border-bottom:1px solid var(--border2)"><th style="text-align:left;padding:4px 8px;color:var(--text3)">Métrica</th><th style="text-align:left;padding:4px 8px;color:var(--text3)">Qué indica</th><th style="text-align:left;padding:4px 8px;color:var(--text3)">Umbral Compensar</th></tr>' +
+     '<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">CPU utilization</td><td style="padding:4px 8px;color:var(--text2)">Saturación de procesamiento</td><td style="padding:4px 8px;color:var(--amber)">&lt; 70% normal · &gt; 90% emergencia</td></tr>' +
+     '<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">Load average (Avg proc waiting)</td><td style="padding:4px 8px;color:var(--text2)">Cola de procesos esperando CPU</td><td style="padding:4px 8px;color:var(--amber)">&lt; 5 · si &gt; 10 reportar a Basis</td></tr>' +
+     '<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">Memoria libre (porcentaje)</td><td style="padding:4px 8px;color:var(--text2)">Memoria disponible</td><td style="padding:4px 8px;color:var(--red)">&gt; 40% libre — si baja llamar a Kyndryl</td></tr>' +
+     '<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">Paging / Swap</td><td style="padding:4px 8px;color:var(--text2)">Presión de memoria — sistema usa disco como RAM</td><td style="padding:4px 8px;color:var(--red)">= 0 · cualquier valor activo es emergencia</td></tr>' +
+     '<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">Disk utilization (Almacenar a disco)</td><td style="padding:4px 8px;color:var(--text2)">Saturación de I/O</td><td style="padding:4px 8px;color:var(--amber)">= 0 KB/s en condición normal</td></tr>' +
+     '<tr><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">LAN</td><td style="padding:4px 8px;color:var(--text2)">Posibles errores de red</td><td style="padding:4px 8px;color:var(--amber)">Sin errores de paquetes</td></tr>' +
+     '</table>',
+   code:'RUTA EN ST06:\nST06 \u2192 \u00e1rbol izquierdo \u2192 seleccionar servidor \u2192 Snapshot \u2192 Memory\n\nSERVIDORES A REVISAR (los 6 nodos ERP PRD Compensar):\n  1. VMPBLOMBERG_CEP_03\n  2. VMPCLINGEN_CEP_03\n  3. VMPCONSTANZA_CEP_00\n  4. VMPMAGDALA_CEP_02\n  5. VMPMELDORF_CEP_03\n  6. VMPVAREL_CEP_03\n\nCAMPOS A DOCUMENTAR POR SERVIDOR:\n  Memoria libre (porcentaje)   \u2192 umbral: > 40%\n  Memoria libre (MB)           \u2192 referencia\n  Tama\u00f1o de swap libre         \u2192 debe ser = swap configurado\n  CPU Utilizaci\u00f3n de usuario   \u2192 < 50%\n  CPU Utilizaci\u00f3n del sistema  \u2192 < 20%\n  Average processes waiting    \u2192 < 5\n  Almacenar a disco / Paging   \u2192 = 0\n\nREFERENCIA MANUAL COMPENSAR:\n  Tomar evidencia de que la memoria disponible (Libre) este\n  por encima del 40%. Si no, alertar al Basis para revision.\n  Verificar por cada uno de los 6 servidores de aplicacion.',
+   next:'Si memoria libre < 40% en cualquier servidor: (1) Tomar screenshot como evidencia. (2) Llamar a Kyndryl para que revisen las gráficas de análisis de consumo de CPU y memoria por appserver (VMPMAGDALA, VMPVAREL, VMPCONSTANZA, VMPBLOMBERG, VMPCLINGEN, VMPMELDORF). (3) Basis Compensar documenta hallazgo con valores por servidor. Si paging activo: emergencia — ir inmediatamente a svmon/vmstat en AIX. Si CPU > 90% sostenido: revisar SM66 para identificar proceso bloqueante.'},
   {id:'c05',layer:'SAP',crit:'h',sec:'B. SAP BASIS — workload y estadísticas',
    name:'ST03N — Workload monitor (tendencia horaria)',sub:'Qué componente domina el tiempo de respuesta y desde cuándo',
    txn:'ST03N',qrev:'Avg response, % DB time, % CPU time, wait time. Comparar hora pico vs normal.',
